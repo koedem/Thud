@@ -1,5 +1,6 @@
 
 #include "Perft.h"
+#include "Timer.h"
 
 template<>
 uint64_t Perft::access_tt<Perft::NO_HASHING>(Board &board, int depth) {
@@ -39,13 +40,14 @@ void Perft::store_tt<Perft::SIMPLE_HASHING>(Board& board, int depth, uint64_t va
 }
 
 template<Perft::Perft_Mode Mode>
-__uint128_t Perft::hash_perft(Board &board, int depth) {
+uint64_t Perft::hash_perft(Board &board, int depth) {
     uint64_t tt_access = access_tt<Mode>(board, depth);
     if (tt_access != 0) {
+        sub_hash_savings += tt_access;
         return tt_access;
     }
 
-    __uint128_t result = 0;
+    uint64_t result = 0;
 
     std::vector<Move> moves;
     move_gen.generate_moves(moves, board);
@@ -56,28 +58,49 @@ __uint128_t Perft::hash_perft(Board &board, int depth) {
 
     for (Move move : moves) {
         board.make_move(move);
-        result += perft(board, depth - 1);
+        result += hash_perft<Mode>(board, depth - 1);
         board.unmake_move(move);
     }
 
-    store_tt<Mode>(board, depth, (uint64_t) result);
+    store_tt<Mode>(board, depth, result);
     return result;
 }
 
-__uint128_t Perft::perft(Board &board, int depth) {
-    __uint128_t result = 0;
+void Perft::print_sub_result(Move move, uint64_t count, uint64_t elapsed_micros) const {
+    move.print();
+    std::cout << " count " << count << " in " << elapsed_micros / 1000 << " ms at speed " << count / elapsed_micros
+              << " MN/s saving " << (sub_hash_savings * 100) / count << "%" << std::endl;
+}
 
+void Perft::print_result(uint64_t count, uint64_t elapsed_micros) const {
+    std::cout << std::endl << "Total count " << count << " in " << elapsed_micros / 1000 << " ms at speed "
+              << count / elapsed_micros << " MN/s" << std::endl;
+    std::cout << "Hash saving percentage = " << (hash_savings * 100) / count << "%" << std::endl;
+}
+
+uint64_t Perft::root_perft(Board& board, int depth) {
+    assert(depth > 1);
+    uint64_t result = 0;
+    hash_savings = 0, sub_hash_savings = 0;
+    Timer timer, timer_inside;
+
+    timer.reset();
     std::vector<Move> moves;
     move_gen.generate_moves(moves, board);
-    if (depth == 1) {
-        return moves.size();
-    }
 
     for (Move move : moves) {
+        timer_inside.reset();
         board.make_move(move);
-        result += perft(board, depth - 1);
+        uint64_t count = hash_perft<SIMPLE_HASHING>(board, depth - 1);
+        result += count;
         board.unmake_move(move);
+
+        print_sub_result(move, count, timer_inside.elapsed());
+        hash_savings += sub_hash_savings;
+        sub_hash_savings = 0;
     }
 
+    uint64_t micros = timer.elapsed();
+    print_result(result, micros);
     return result;
 }

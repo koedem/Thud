@@ -17,6 +17,7 @@ private:
     MoveGenerator move_gen;
     Indexer indexer;
     Perft_TT tt;
+    uint64_t hash_savings = 0, sub_hash_savings = 0;
 
     template<Perft_Mode Mode>
     uint64_t access_tt(Board& board, int depth);
@@ -24,10 +25,13 @@ private:
     template<Perft_Mode Mode>
     void store_tt(Board& board, int depth, uint64_t value);
 
+    void print_sub_result(Move move, uint64_t count, uint64_t elapsed_micros) const;
+
+    void print_result(uint64_t count, uint64_t elapsed_micros) const;
+
 public:
-    __uint128_t perft(Board& board, int depth);
-
     template<Perft_Mode Mode>
-    __uint128_t hash_perft(Board& board, int depth);
+    uint64_t hash_perft(Board& board, int depth);
 
+    uint64_t root_perft(Board& board, int depth);
 };
