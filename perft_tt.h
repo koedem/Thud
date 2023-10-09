@@ -85,7 +85,7 @@ public:
     }
 
 private:
-    static constexpr uint32_t size = 2 << 10;
+    static constexpr uint32_t size = 1 << 0;
     std::vector<Bucket> table;
 
     uint64_t missed_writes = 0;
