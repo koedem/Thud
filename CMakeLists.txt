@@ -17,4 +17,5 @@ add_executable(Thud main.cpp Board.h
         Perft.h
         perft_tt.h
         Indexer.cpp
-        Indexer.h)
+        Indexer.h
+        Timer.h)
