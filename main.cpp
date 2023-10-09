@@ -3,6 +3,7 @@
 #include "MoveGenerator.h"
 #include "Tablebase_test_128bit.h"
 #include "Search.h"
+#include "Perft.h"
 
 MoveGenerator move_gen;
 
@@ -58,21 +59,17 @@ void perft_test(Board& board, int depth_limit) {
 }
 
 int main() {
-    __uint128_t sum = 0;
-    for (int i = 0; i < 200000; i++) {
-        //sum += big_fac(i);
-    }
+    //Tablebase_test test;
+    //test.test_indexing(4);
 
-    std::cout << (uint64_t) sum;
-
-    Tablebase_test test;
-    test.test_indexing(4);
+    Board board(Position::Full);
+    Perft perft;
+    std::cout << (uint64_t) perft.hash_perft<Perft::NO_HASHING>(board, 2) << std::endl;
     //search_test(5);
 
     //Board board(Position::Endgame);
     //perft_test(board, 6);
 
-    //Board board_2(Position::Full);
     //perft_test(board_2, 5);
 
     return 0;

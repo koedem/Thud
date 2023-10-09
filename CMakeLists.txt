@@ -12,4 +12,9 @@ add_executable(Thud main.cpp Board.h
         Tablebase_test.h
         Search.cpp
         Search.h
-        Tablebase_test_128bit.h)
+        Tablebase_test_128bit.h
+        Perft.cpp
+        Perft.h
+        perft_tt.h
+        Indexer.cpp
+        Indexer.h)
