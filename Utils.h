@@ -53,6 +53,8 @@ enum class Position {
     Full, Endgame
 };
 
+void setup_valid_squares();
+
 bool square_on_board(Square square);
 
 struct Move {

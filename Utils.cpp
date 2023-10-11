@@ -1,24 +1,35 @@
 #include "Utils.h"
 
-bool square_on_board(Square square) {
-    Square row = square / 16, file = square % 16;
-    if (row >= 15 || file >= 15) { // out of range
-        return false;
-    }
-    if (row < 5 && 5 - row > file) { // top left
-        return false;
-    }
-    if (row < 5 && 5 - row > 14 - file) { // top right
-        return false;
-    }
-    if (row >= 9 && row - 9 > file) { // bottom left
-        return false;
-    }
-    if (row >= 9 && row - 9 > 14 - file) { // bottom right
-        return false;
-    }
+bool valid_squares[256];
 
-    return true;
+void setup_valid_squares() {
+    for (int square = 0; square < 256; square++) {
+        bool value = true;
+        Square row = square / 16, file = square % 16;
+        if (row >= 15 || file >= 15) { // out of range
+            value = false;
+        }
+        if (row < 5 && 5 - row > file) { // top left
+            value = false;
+        }
+        if (row < 5 && 5 - row > 14 - file) { // top right
+            value = false;
+        }
+        if (row >= 9 && row - 9 > file) { // bottom left
+            value = false;
+        }
+        if (row >= 9 && row - 9 > 14 - file) { // bottom right
+            value = false;
+        }
+        if (row == 7 && file == 7) { // stone
+            value = false;
+        }
+        valid_squares[square] = value;
+    }
+}
+
+bool square_on_board(Square square) {
+    return valid_squares[square];
 }
 
 void print_colour(Colour colour) {
