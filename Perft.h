@@ -19,6 +19,8 @@ private:
     Perft_TT tt;
     uint64_t hash_savings = 0, sub_hash_savings = 0;
 
+    int most_recent_symmetry = 0;
+
     template<Perft_Mode Mode>
     uint64_t access_tt(Board& board, int depth);
 
