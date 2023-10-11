@@ -13,25 +13,6 @@ class Indexer {
     uint32_t index_to_square[164]{};
     uint32_t symmetric_indices_to_squares[8][164]{};
 
-    static boost::multiprecision::uint128_t n_choose_k(std::size_t n, std::size_t k) {
-        if (k > n) {
-            return 0;
-        }
-        if (k * 2 > n) {
-            k = n - k;
-        }
-        if (k == 0) {
-            return 1;
-        }
-
-        boost::multiprecision::uint256_t result = n;
-        for (std::size_t i = 2; i <= k; ++i) {
-            result *= (n - i + 1);
-            result /= i;
-        }
-        return static_cast<boost::multiprecision::uint128_t>(result);
-    }
-
     boost::multiprecision::uint128_t access_stored_n_choose_k(std::size_t n, std::size_t k) {
         return binoms[n][k];
     }

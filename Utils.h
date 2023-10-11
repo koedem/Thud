@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <boost/multiprecision/cpp_int.hpp>
 
 /**
  * Using values Dwarf = true, Troll = false.
@@ -56,6 +57,8 @@ enum class Position {
 void setup_valid_squares();
 
 bool square_on_board(Square square);
+
+boost::multiprecision::uint128_t n_choose_k(std::size_t n, std::size_t k);
 
 struct Move {
     Colour to_move;
