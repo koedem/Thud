@@ -70,40 +70,51 @@ uint64_t Indexer::index_trolls(Board &board) {
     return index_from_troll_positions(trolls);
 }
 
-Indexer::Index Indexer::symmetric_index(Board& board) {
-    Index result{ -1, -1ull};
-
-    std::vector<int> dwarves;
-    for (int id = 0; id < 164; id++) { // first get a baseline of what the first encoding would look like
-        if (board.get_square(symmetric_indices_to_squares[0][id]) == Piece::DWARF) {
-            dwarves.emplace_back(id);
+template<Piece piece>
+void Indexer::smallest_encoding_order(Board& board, std::vector<int>& pieces, bool smallest[8], int start_index, int most_recent_symmetry) {
+    for (int symmetry = start_index; symmetry < 8; symmetry++) {
+        if (!smallest[symmetry] || symmetry == most_recent_symmetry) {
+            continue;
         }
-    }
-
-    bool smallest[8] = { true, true, true, true, true, true, true, true };
-    for (int symmetry = 1; symmetry < 8; symmetry++) {
         uint32_t piece_index = -1;
         bool improved = false;
         for (int id = 0; id < 164; id++) { // can we improve the baseline?
-            if (board.get_square(symmetric_indices_to_squares[symmetry][id]) == Piece::DWARF) {
+            if (board.get_square(symmetric_indices_to_squares[symmetry][id]) == piece) {
                 piece_index++;
                 if (!improved) {
-                    if (dwarves[piece_index] < id) {
+                    if (pieces[piece_index] < id) {
                         smallest[symmetry] = false;
                         break;
-                    } else if (dwarves[piece_index] > id) { // our encoding is smaller confirmed
+                    } else if (pieces[piece_index] > id) { // our encoding is smaller confirmed
                         for (int small = 0; small < symmetry; small++) {
                             smallest[small] = false;
+                        }
+                        if (most_recent_symmetry >= 0) {
+                            smallest[most_recent_symmetry] = false;
                         }
                         improved = true;
                     } else {
                         continue;
                     }
                 }
-                dwarves[piece_index] = id;
+                pieces[piece_index] = id;
             }
         }
     }
+}
+
+Indexer::Index Indexer::symmetric_index(Board& board, int most_recent_symmetry) {
+    Index result{ -1, -1ull};
+
+    std::vector<int> dwarves;
+    for (int id = 0; id < 164; id++) { // first get a baseline of what the first encoding would look like
+        if (board.get_square(symmetric_indices_to_squares[most_recent_symmetry][id]) == Piece::DWARF) {
+            dwarves.emplace_back(id);
+        }
+    }
+
+    bool smallest[8] = { true, true, true, true, true, true, true, true };
+    smallest_encoding_order<Piece::DWARF>(board, dwarves, smallest, 0, most_recent_symmetry);
 
     result.dwarves = index_from_dwarf_positions(dwarves);
 
@@ -113,6 +124,8 @@ Indexer::Index Indexer::symmetric_index(Board& board) {
         if (!smallest[symmetry]) {
             continue;
         }
+
+        result.symmetry = symmetry; // first candidate for dwarf symmetry
         for (int id = 0; id < 164; id++) { // first get a baseline of what the smallest encoding would look like
             if (board.get_square(symmetric_indices_to_squares[symmetry][id]) == Piece::TROLL) {
                 trolls.emplace_back(id);
@@ -121,29 +134,7 @@ Indexer::Index Indexer::symmetric_index(Board& board) {
         break;
     }
     symmetry++;
-
-    for (; symmetry < 8; symmetry++) {
-        if (!smallest[symmetry]) {
-            continue;
-        }
-        uint32_t piece_index = -1;
-        bool improved = false;
-        for (int id = 0; id < 164; id++) {
-            if (board.get_square(symmetric_indices_to_squares[symmetry][id]) == Piece::TROLL) {
-                piece_index++;
-                if (!improved) {
-                    if (trolls[piece_index] < id) {
-                        break;
-                    } else if (trolls[piece_index] > id) { // our encoding is smaller confirmed
-                        improved = true;
-                    } else {
-                        continue;
-                    }
-                }
-                trolls[piece_index] = id;
-            }
-        }
-    }
+    smallest_encoding_order<Piece::TROLL>(board, trolls, smallest, symmetry, -1);
 
     result.trolls = index_from_troll_positions(trolls);
 
