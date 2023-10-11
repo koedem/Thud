@@ -11,6 +11,7 @@ class Indexer {
     */
     boost::multiprecision::uint128_t binoms[165][41]{};
     uint32_t index_to_square[164]{};
+    uint32_t symmetric_indices_to_squares[8][164]{};
 
     static boost::multiprecision::uint128_t n_choose_k(std::size_t n, std::size_t k) {
         if (k > n) {
@@ -56,13 +57,58 @@ class Indexer {
         }
     }
 
+    static int square_from_file_row(int file, int row, int symmetry) {
+        if ((symmetry & 4) != 0) {
+            file = 15 - file;
+        }
+        if ((symmetry & 2) != 0) {
+            row = 15 - row;
+        }
+
+        if (symmetry % 2 == 1) {
+            std::swap(row, file);
+        }
+        return 16 * row + file;
+    }
+
+    void symmetry_translations() {
+        for (int symmetry = 0; symmetry < 8; symmetry++) {
+            int i = 0;
+            for (int row = 0; row < 16; row++) {
+                for (int file = 0; file < 16; file++) {
+                    int square = square_from_file_row(file, row, symmetry);
+                    if (square_on_board(square)) {
+                        symmetric_indices_to_squares[symmetry][i] = square;
+                        i++;
+                    }
+                }
+            }
+        }
+    }
+
+    boost::multiprecision::uint128_t index_from_dwarf_positions_without_piece_count(std::vector<int>& dwarves);
+
+    uint64_t index_from_troll_positions_without_piece_count(std::vector<int>& trolls);
+
+    boost::multiprecision::uint128_t index_from_dwarf_positions(std::vector<int>& dwarves);
+
+    uint64_t index_from_troll_positions(std::vector<int>& trolls);
+
 public:
+    struct Index {
+        boost::multiprecision::uint128_t dwarves;
+        uint64_t trolls;
+    };
+
     Indexer() {
         prepare_binoms();
         translate_squares();
+        symmetry_translations();
     }
 
     boost::multiprecision::uint128_t index_dwarves(Board& board);
 
     uint64_t index_trolls(Board& board);
+
+    Index symmetric_index(Board &board);
 };
