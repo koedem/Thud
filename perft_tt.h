@@ -42,7 +42,7 @@ public:
     }
 
     void emplace(boost::multiprecision::uint128_t dwarves, uint64_t trolls, uint64_t value) {
-        auto & entries = table[pos(dwarves)].entries;
+        auto & entries = table[pos(dwarves, trolls)].entries;
         bool swapped = false;
         for (int i = 0; i < 4; i++) {
             auto & entry = entries[i];
@@ -63,7 +63,7 @@ public:
     }
 
     uint64_t at(const boost::multiprecision::uint128_t& dwarves, uint64_t trolls) {
-        for (auto& entry : table[pos(dwarves)].entries) {
+        for (auto& entry : table[pos(dwarves, trolls)].entries) {
             if (entry.dwarves == dwarves && entry.trolls == trolls) {
                 return entry.value;
             }
@@ -72,7 +72,7 @@ public:
     }
 
     bool contains(const boost::multiprecision::uint128_t& dwarves, uint64_t trolls) {
-        for (auto& entry : table[pos(dwarves)].entries) { // NOLINT(readability-use-anyofallof)
+        for (auto& entry : table[pos(dwarves, trolls)].entries) { // NOLINT(readability-use-anyofallof)
             if (entry.dwarves == dwarves && entry.trolls == trolls) {
                 return true;
             }
@@ -80,12 +80,12 @@ public:
         return false;
     }
 
-    static inline uint64_t pos(const boost::multiprecision::uint128_t& dwarves) {
-        return static_cast<uint64_t>(dwarves % size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
+    static inline uint64_t pos(const boost::multiprecision::uint128_t& dwarves, uint64_t trolls) {
+        return static_cast<uint64_t>((dwarves + trolls) % size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
     }
 
 private:
-    static constexpr uint32_t size = 1 << 0;
+    static constexpr uint32_t size = 1 << 27;
     std::vector<Bucket> table;
 
     uint64_t missed_writes = 0;
