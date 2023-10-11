@@ -12,11 +12,27 @@ void Perft::store_tt<Perft::NO_HASHING>(Board &board, int depth, uint64_t value)
 
 template<>
 uint64_t Perft::access_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth) {
+    if (depth > 1) {
+        auto index = indexer.symmetric_index(board);
+        index.trolls *= 16;
+        index.trolls += depth;
+
+        uint64_t value = tt.at(index.dwarves, index.trolls); // TODO unify this, use the struct everywhere?
+        return value;
+    }
     return 0;
 }
 
 template<>
-void Perft::store_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth, uint64_t value) {}
+void Perft::store_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth, uint64_t value) {
+    if (depth > 1) {
+        auto index = indexer.symmetric_index(board);
+        index.trolls *= 16;
+        index.trolls += depth;
+
+        tt.emplace(index.dwarves, index.trolls, value);
+    }
+}
 
 template<>
 uint64_t Perft::access_tt<Perft::SIMPLE_HASHING>(Board& board, int depth) {
@@ -68,13 +84,13 @@ uint64_t Perft::hash_perft(Board &board, int depth) {
 
 void Perft::print_sub_result(Move move, uint64_t count, uint64_t elapsed_micros) const {
     move.print();
-    std::cout << " count " << count << " in " << elapsed_micros / 1000 << " ms at speed " << count / elapsed_micros
+    std::cout << " count " << count << " in " << elapsed_micros / 1000 << " ms at speed " << count / (elapsed_micros + 1)
               << " MN/s saving " << (sub_hash_savings * 100) / count << "%" << std::endl;
 }
 
 void Perft::print_result(uint64_t count, uint64_t elapsed_micros) const {
     std::cout << std::endl << "Total count " << count << " in " << elapsed_micros / 1000 << " ms at speed "
-              << count / elapsed_micros << " MN/s" << std::endl;
+              << count / (elapsed_micros + 1) << " MN/s" << std::endl; // avoid division by zero
     std::cout << "Hash saving percentage = " << (hash_savings * 100) / count << "%" << std::endl;
 }
 
@@ -91,7 +107,7 @@ uint64_t Perft::root_perft(Board& board, int depth) {
     for (Move move : moves) {
         timer_inside.reset();
         board.make_move(move);
-        uint64_t count = hash_perft<SIMPLE_HASHING>(board, depth - 1);
+        uint64_t count = hash_perft<SYMMETRY_HASHING>(board, depth - 1);
         result += count;
         board.unmake_move(move);
 
@@ -102,5 +118,6 @@ uint64_t Perft::root_perft(Board& board, int depth) {
 
     uint64_t micros = timer.elapsed();
     print_result(result, micros);
+    tt.print_size();
     return result;
 }
