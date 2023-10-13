@@ -5,12 +5,16 @@
 #include <cstdint>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include "boost/multiprecision/cpp_int.hpp"
+#include "Indexer.h"
 
 class Perft_TT {
 
 private:
     static constexpr uint32_t entries_per_bucket = 4;
+    static constexpr bool store_to_file = false;
+    const std::string storage_path = "/home/kolja/Documents/Programming/C++ programs/Thud/StartPositionD7.tt";
 
     struct Entry {
         boost::multiprecision::uint128_t dwarves;
@@ -22,10 +26,36 @@ private:
         Entry entries[entries_per_bucket];
     };
 
-
+    void load(const std::string& path) {
+        if (store_to_file) {
+            std::ifstream file(path, std::ios::in | std::ios::binary);
+            if (!file.is_open()) {
+                // Handle file open error
+                return;
+            }
+            file.seekg(0, std::ios::end);
+            std::streampos fileSize = file.tellg();
+            file.seekg(0, std::ios::beg);
+            std::cout << fileSize << std::endl;
+            file.read(reinterpret_cast<char *>(table.data()), fileSize);
+            file.close();
+        }
+    }
 
 public:
+    void store() {
+        if (store_to_file) {
+            std::ofstream file(storage_path, std::ios::out | std::ios::binary);
+            if (!file.is_open()) {
+                return;
+            }
+            file.write(reinterpret_cast<char *>(table.data()), table.size() * sizeof(Bucket));
+            file.close();
+        }
+    }
+
     Perft_TT() : table(size) {
+        load(storage_path);
     }
 
     void print_size() {
