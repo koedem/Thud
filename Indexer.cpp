@@ -71,8 +71,9 @@ uint64_t Indexer::index_trolls(Board &board) {
 }
 
 template<Piece piece>
-void Indexer::smallest_encoding_order(Board& board, std::vector<int>& pieces, bool smallest[8], int start_index, int most_recent_symmetry) {
-    for (int symmetry = start_index; symmetry < 8; symmetry++) {
+void Indexer::smallest_encoding_order(Board& board, std::vector<int>& pieces, bool smallest[8]) {
+    int most_recent_symmetry = this->most_recent_symmetry;
+    for (int symmetry = 0; symmetry < 8; symmetry++) {
         if (!smallest[symmetry] || symmetry == most_recent_symmetry) {
             continue;
         }
@@ -89,9 +90,9 @@ void Indexer::smallest_encoding_order(Board& board, std::vector<int>& pieces, bo
                         for (int small = 0; small < symmetry; small++) {
                             smallest[small] = false;
                         }
-                        if (most_recent_symmetry >= 0) {
-                            smallest[most_recent_symmetry] = false;
-                        }
+                        smallest[most_recent_symmetry] = false;
+                        this->most_recent_symmetry = symmetry;
+
                         improved = true;
                     } else {
                         continue;
@@ -103,10 +104,11 @@ void Indexer::smallest_encoding_order(Board& board, std::vector<int>& pieces, bo
     }
 }
 
-Indexer::Index Indexer::symmetric_index(Board& board, int most_recent_symmetry) {
+Indexer::Index Indexer::symmetric_index(Board& board) {
     Index result{ -1, -1ull};
 
     std::vector<int> dwarves;
+    int most_recent_symmetry = this->most_recent_symmetry;
     for (int id = 0; id < 164; id++) { // first get a baseline of what the first encoding would look like
         if (board.get_square(symmetric_indices_to_squares[most_recent_symmetry][id]) == Piece::DWARF) {
             dwarves.emplace_back(id);
@@ -114,27 +116,18 @@ Indexer::Index Indexer::symmetric_index(Board& board, int most_recent_symmetry) 
     }
 
     bool smallest[8] = { true, true, true, true, true, true, true, true };
-    smallest_encoding_order<Piece::DWARF>(board, dwarves, smallest, 0, most_recent_symmetry);
+    smallest_encoding_order<Piece::DWARF>(board, dwarves, smallest);
 
     result.dwarves = index_from_dwarf_positions(dwarves);
 
     std::vector<int> trolls;
-    int symmetry = 0;
-    for (; symmetry < 8; symmetry++) {
-        if (!smallest[symmetry]) {
-            continue;
+    most_recent_symmetry = this->most_recent_symmetry;
+    for (int id = 0; id < 164; id++) { // first get a baseline of what the smallest encoding would look like
+        if (board.get_square(symmetric_indices_to_squares[most_recent_symmetry][id]) == Piece::TROLL) {
+            trolls.emplace_back(id);
         }
-
-        result.symmetry = symmetry; // first candidate for dwarf symmetry
-        for (int id = 0; id < 164; id++) { // first get a baseline of what the smallest encoding would look like
-            if (board.get_square(symmetric_indices_to_squares[symmetry][id]) == Piece::TROLL) {
-                trolls.emplace_back(id);
-            }
-        }
-        break;
     }
-    symmetry++;
-    smallest_encoding_order<Piece::TROLL>(board, trolls, smallest, symmetry, -1);
+    smallest_encoding_order<Piece::TROLL>(board, trolls, smallest);
 
     result.trolls = index_from_troll_positions(trolls);
 

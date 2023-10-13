@@ -13,6 +13,8 @@ class Indexer {
     uint32_t index_to_square[164]{};
     uint32_t symmetric_indices_to_squares[8][164]{};
 
+    int most_recent_symmetry = 0;
+
     boost::multiprecision::uint128_t access_stored_n_choose_k(std::size_t n, std::size_t k) {
         return binoms[n][k];
     }
@@ -76,13 +78,12 @@ class Indexer {
     uint64_t index_from_troll_positions(std::vector<int>& trolls);
 
     template<Piece piece>
-    void smallest_encoding_order(Board& board, std::vector<int>& pieces, bool smallest[8], int start_index, int most_recent_symmetry);
+    void smallest_encoding_order(Board& board, std::vector<int>& pieces, bool smallest[8]);
 
 public:
     struct Index {
         boost::multiprecision::uint128_t dwarves;
         uint64_t trolls;
-        int symmetry;
     };
 
     Indexer() {
@@ -95,5 +96,5 @@ public:
 
     uint64_t index_trolls(Board& board);
 
-    Index symmetric_index(Board &board, int most_recent_symmetry = 0);
+    Index symmetric_index(Board &board);
 };
