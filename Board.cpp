@@ -92,15 +92,15 @@ void Board::unmake_move(Move move) {
     }
 }
 
-Piece Board::get_square(Square square) {
+Piece Board::get_square(Square square) const {
     return board[square];
 }
 
-Colour Board::get_to_move() {
+Colour Board::get_to_move() const {
     return to_move;
 }
 
-void Board::print() {
+void Board::print() const {
     for (Square i = 0; i < 16; i++) {
         for (Square j = 0; j < 16; j++) {
             Square square = i * 16 + j;

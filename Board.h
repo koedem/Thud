@@ -26,11 +26,11 @@ public:
 
     void unmake_move(Move move);
 
-    Piece get_square(Square square);
+    [[nodiscard]] Piece get_square(Square square) const;
 
-    Colour get_to_move();
+    [[nodiscard]] Colour get_to_move() const;
 
-    void print();
+    void print() const;
 
     [[nodiscard]] int number_of_captures() const;
 
