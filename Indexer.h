@@ -82,8 +82,14 @@ class Indexer {
 
 public:
     struct Index {
-        boost::multiprecision::uint128_t dwarves;
+        [[no_unique_address]] boost::multiprecision::uint128_t dwarves;
         uint64_t trolls;
+
+        bool operator==(const Indexer::Index& other) const
+        {
+            return (dwarves == other.dwarves && trolls == other.trolls);
+        }
+
     };
 
     Indexer() {
