@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include <cstdint>
 #include <vector>
 #include <iostream>
@@ -20,7 +18,7 @@ private:
 
     struct Entry {
         [[no_unique_address]] Index index;
-        uint8_t lock;
+        Spin_Lock lock;
         uint16_t depth;
         uint64_t value;
     };
@@ -77,6 +75,8 @@ public:
     void emplace(Index index, uint16_t depth, uint64_t value) {
         auto & entries = table[pos(index, depth)].entries;
         bool swapped = false;
+
+        std::lock_guard<Spin_Lock> guard(entries[0].lock);
         for (int i = 0; i < 4; i++) {
             auto & entry = entries[i];
             if (entry.value < value) { // last slot is always replace
@@ -96,7 +96,9 @@ public:
     }
 
     uint64_t at(const Index& index, uint16_t depth) {
-        for (auto& entry : table[pos(index, depth)].entries) {
+        auto & entries = table[pos(index, depth)].entries;
+        std::lock_guard<Spin_Lock> guard(entries[0].lock);
+        for (auto& entry : entries) {
             if (entry.index == index && entry.depth == depth) {
                 return entry.value;
             }
@@ -105,7 +107,9 @@ public:
     }
 
     bool contains(const Index& index, uint16_t depth) {
-        for (auto& entry : table[pos(index, depth)].entries) { // NOLINT(readability-use-anyofallof)
+        auto & entries = table[pos(index, depth)].entries;
+        std::lock_guard<Spin_Lock> guard(entries[0].lock);
+        for (auto& entry : entries) {
             if (entry.index == index && entry.depth == depth) {
                 return true;
             }
@@ -118,7 +122,7 @@ public:
     }
 
 private:
-    static constexpr uint32_t size = 1 << 20;
+    static constexpr uint32_t size = 1 << 24;
     std::vector<Bucket> table;
 
     uint64_t missed_writes = 0;

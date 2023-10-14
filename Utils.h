@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <atomic>
 
 /**
  * Using values Dwarf = true, Troll = false.
@@ -76,5 +77,34 @@ struct Move {
         ::print_square(from);
         std::cout << "-";
         ::print_square(to);
+    }
+};
+
+struct Spin_Lock {
+    std::atomic<bool> spin_lock = false;
+
+    void lock() {
+        for (;;) {
+            if (!spin_lock.exchange(true, std::memory_order_acquire)) {
+                break;
+            }
+            while (spin_lock.load(std::memory_order_relaxed)) {
+                //__builtin_ia32_pause(); // In case of hyper-threading this should be beneficial in theory, but in practice it's slightly slower
+            }
+        }
+    }
+
+    void unlock() {
+        spin_lock.store(false, std::memory_order_release);
+    }
+
+    Spin_Lock() noexcept = default;
+
+    Spin_Lock(Spin_Lock&&) noexcept {
+    }
+
+    Spin_Lock& operator=(Spin_Lock&&) noexcept {
+        spin_lock = false;
+        return *this;
     }
 };
