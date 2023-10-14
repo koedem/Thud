@@ -69,38 +69,30 @@ class Indexer {
         }
     }
 
-    boost::multiprecision::uint128_t index_from_dwarf_positions_without_piece_count(std::vector<int>& dwarves);
+    template<class Value>
+    Value index_from_piece_positions_without_piece_count(std::vector<int>& pieces, int n_choose = 164);
 
-    uint64_t index_from_troll_positions_without_piece_count(std::vector<int>& trolls);
-
-    boost::multiprecision::uint128_t index_from_dwarf_positions(std::vector<int>& dwarves);
-
-    uint64_t index_from_troll_positions(std::vector<int>& trolls);
-
-    template<Piece piece>
-    void smallest_encoding_order(Board& board, std::vector<int>& pieces, bool smallest[8]);
+    void small_smallest_encoding_order(Board& board, std::vector<int>& piece_locations, bool smallest[8]);
 
 public:
-    struct Index {
-        [[no_unique_address]] boost::multiprecision::uint128_t dwarves;
-        uint64_t trolls;
+    struct SmallIndex {
+        [[no_unique_address]] boost::multiprecision::uint128_t dwarves; // TODO piece_locations;
+        uint32_t trolls; // TODO piece_order;
+        uint8_t material;
 
-        bool operator==(const Indexer::Index& other) const
+        bool operator==(const Indexer::SmallIndex& other) const
         {
-            return (dwarves == other.dwarves && trolls == other.trolls);
+            return (dwarves == other.dwarves && trolls == other.trolls && material == other.material);
         }
-
     };
 
     Indexer() {
         prepare_binoms();
         translate_squares();
         symmetry_translations();
-    }
+    };
 
-    boost::multiprecision::uint128_t index_dwarves(Board& board);
+    SmallIndex small_index(Board& board);
 
-    uint64_t index_trolls(Board& board);
-
-    Index symmetric_index(Board &board);
+    SmallIndex symmetric_small_index(Board& board);
 };

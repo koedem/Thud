@@ -2,7 +2,7 @@
 #include "Perft.h"
 #include "Timer.h"
 
-constexpr int tt_depth = 2;
+constexpr int tt_depth = 1;
 
 template<>
 uint64_t Perft::access_tt<Perft::NO_HASHING>(Board &board, int depth) {
@@ -15,11 +15,8 @@ void Perft::store_tt<Perft::NO_HASHING>(Board &board, int depth, uint64_t value)
 template<>
 uint64_t Perft::access_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth) {
     if (depth >= tt_depth) {
-        auto index = indexer.symmetric_index(board);
-        index.trolls *= 16;
-        index.trolls += depth;
-
-        uint64_t value = tt.at(index); // TODO unify this, use the struct everywhere?
+        auto index = indexer.symmetric_small_index(board);
+        uint64_t value = tt.at(index, depth); // TODO unify this, use the struct everywhere?
         return value;
     }
     return 0;
@@ -28,33 +25,22 @@ uint64_t Perft::access_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth) {
 template<>
 void Perft::store_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth, uint64_t value) {
     if (depth >= tt_depth) {
-        auto index = indexer.symmetric_index(board);
-        index.trolls *= 16;
-        index.trolls += depth;
-
-        tt.emplace(index, value);
+        auto index = indexer.symmetric_small_index(board);
+        tt.emplace(index, depth, value);
     }
 }
 
 template<>
 uint64_t Perft::access_tt<Perft::SIMPLE_HASHING>(Board& board, int depth) {
-    boost::multiprecision::uint128_t dwarf_index = indexer.index_dwarves(board);
-    uint64_t troll_index = indexer.index_trolls(board);
-    troll_index *= 16;
-    troll_index += depth;
-
-    uint64_t value = tt.at(Indexer::Index{dwarf_index, troll_index}); // TODO
+    auto index = indexer.small_index(board);
+    uint64_t value = tt.at(index, depth);
     return value;
 }
 
 template<>
 void Perft::store_tt<Perft::SIMPLE_HASHING>(Board& board, int depth, uint64_t value) {
-    boost::multiprecision::uint128_t dwarf_index = indexer.index_dwarves(board);
-    uint64_t troll_index = indexer.index_trolls(board);
-    troll_index *= 16;
-    troll_index += depth;
-
-    tt.emplace(Indexer::Index{dwarf_index, troll_index}, value); // TODO
+    auto index = indexer.small_index(board);
+    tt.emplace(index, depth, value);
 }
 
 template<Perft::Perft_Mode Mode>
