@@ -1,4 +1,5 @@
 #include <cassert>
+#include <random>
 #include "MoveGenerator.h"
 
 int piece_line_length_in_direction(Board& board, Square square, Direction dir, Piece piece) {
@@ -125,7 +126,21 @@ void generate_troll_quiets(std::vector<Move>& moves, Board& board) {
     }
 }
 
-void MoveGenerator::generate_moves(std::vector<Move>& moves, Board& board) {
+void MoveGenerator::generate_shuffled_moves(std::vector<Move>& moves, Board& board) const {
+    generate_moves(moves, board);
+    thread_local static std::mt19937 mt(seed);
+
+    for (int i = 0; i < moves.size(); i++) {
+        // Get a random index of the array past the current index.
+        // ... The argument is an exclusive bound.
+        //     It will not go past the array's end.
+        int randomValue = i + (mt() % (moves.size() - i)); // One could get rid of this mod but it doesn't appear to be a slowdown currently
+        // Swap the random element with the present element.
+        std::swap(moves[randomValue], moves[i]);
+    }
+}
+
+void MoveGenerator::generate_moves(std::vector<Move>& moves, Board& board) const {
     moves.clear();
     if (board.get_to_move() == Dwarf) {
         generate_dwarf_captures(moves, board);
@@ -136,7 +151,7 @@ void MoveGenerator::generate_moves(std::vector<Move>& moves, Board& board) {
     }
 }
 
-void MoveGenerator::generate_captures(std::vector<Move> &captures, Board &board) {
+void MoveGenerator::generate_captures(std::vector<Move> &captures, Board &board) const {
     captures.clear();
     if (board.get_to_move() == Dwarf) {
         generate_dwarf_captures(captures, board);
