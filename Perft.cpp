@@ -2,7 +2,7 @@
 #include "Perft.h"
 #include "Timer.h"
 
-constexpr int tt_depth = 1;
+constexpr int tt_depth = 2;
 
 template<>
 uint64_t Perft::access_tt<Perft::NO_HASHING>(Board &board, int depth) {
@@ -54,11 +54,12 @@ uint64_t Perft::hash_perft(Board &board, int depth) {
     uint64_t result = 0;
 
     std::vector<Move> moves;
-    move_gen.generate_moves(moves, board);
     if (depth == 1) {
+        move_gen.generate_moves(moves, board);
         store_tt<Mode>(board, depth, moves.size());
         return moves.size();
     }
+    move_gen.generate_shuffled_moves(moves, board);
 
     for (Move move : moves) {
         board.make_move(move);
@@ -82,7 +83,7 @@ void Perft::print_result(uint64_t count, uint64_t elapsed_micros) const {
     std::cout << "Hash saving percentage = " << (hash_savings * 100) / count << "%" << std::endl;
 }
 
-uint64_t Perft::root_perft(Board& board, int depth) {
+uint64_t Perft::root_perft(Board board, int depth, bool print) {
     assert(depth > 1);
     uint64_t result = 0;
     hash_savings = 0, sub_hash_savings = 0;
@@ -99,16 +100,20 @@ uint64_t Perft::root_perft(Board& board, int depth) {
         result += count;
         board.unmake_move(move);
 
-        if (timer_inside.elapsed() > 1000000) { // Storing is not worth if we did not spend at least a second of actual calculation
-            tt.store();
+        if (print) {
+            if (timer_inside.elapsed() > 1000000) { // Storing is not worth if we did not spend at least a second of actual calculation
+                //tt.store();
+            }
+            print_sub_result(move, count, timer_inside.elapsed());
         }
-        print_sub_result(move, count, timer_inside.elapsed());
         hash_savings += sub_hash_savings;
         sub_hash_savings = 0;
     }
 
-    uint64_t micros = timer.elapsed();
-    print_result(result, micros);
-    tt.print_size();
+    if (print) {
+        uint64_t micros = timer.elapsed();
+        print_result(result, micros);
+        tt.print_size();
+    }
     return result;
 }
