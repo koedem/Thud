@@ -34,6 +34,8 @@ public:
 
     void print() const;
 
+    void print(Move move) const;
+
     [[nodiscard]] int number_of_captures() const;
 
     [[nodiscard]] EvalType get_material() const;

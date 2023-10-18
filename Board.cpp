@@ -120,13 +120,52 @@ void Board::print() const {
             if (piece == Piece::NONE) {
                 std::cout << "0";
             } else if (piece == Piece::DWARF) {
+                std::cout << "\033[32m";
                 std::cout << "Z";
+                std::cout << "\033[0m";
             } else if (piece == Piece::TROLL) {
+                std::cout << "\033[36m";
                 std::cout << "T";
+                std::cout << "\033[0m";
             } else if (piece == Piece::STONE) {
                 std::cout << "X";
             } else if (piece == Piece::OUTSIDE) {
                 std::cout << "-";
+            }
+            std::cout << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+void Board::print(Move move) const {
+    for (Square i = 0; i < 16; i++) {
+        for (Square j = 0; j < 16; j++) {
+            Square square = i * 16 + j;
+
+            if (square == move.from || square == move.to) {
+                std::cout << "\033[1;7;33m";
+            }
+
+            Piece piece = board[square];
+            if (piece == Piece::NONE) {
+                std::cout << "0";
+            } else if (piece == Piece::DWARF) {
+                std::cout << "\033[32m";
+                std::cout << "Z";
+                std::cout << "\033[0m";
+            } else if (piece == Piece::TROLL) {
+                std::cout << "\033[36m";
+                std::cout << "T";
+                std::cout << "\033[0m";
+            } else if (piece == Piece::STONE) {
+                std::cout << "X";
+            } else if (piece == Piece::OUTSIDE) {
+                std::cout << "-";
+            }
+
+            if (square == move.from || square == move.to) {
+                std::cout << "\033[0m";
             }
             std::cout << " ";
         }
