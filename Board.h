@@ -44,4 +44,8 @@ public:
 private:
     template<Position TYPE>
     void fill_position();
+
+    void remove_dwarf(Square square);
+
+    void add_dwarf(Square square);
 };

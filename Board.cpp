@@ -53,8 +53,13 @@ void Board::change_to_move() {
 }
 
 void Board::make_move(Move move) {
-    board[move.to] = board[move.from];
-    board[move.from] = Piece::NONE;
+    if (move.to_move == Dwarf) {
+        remove_dwarf(move.from);
+        add_dwarf(move.to);
+    } else {
+        board[move.to] = board[move.from];
+        board[move.from] = Piece::NONE;
+    }
     num_captured += std::popcount(move.captures);
 
 
@@ -64,7 +69,7 @@ void Board::make_move(Move move) {
         } else {
             for (int dir = 0; dir < directions.size(); dir++) {
                 if ((move.captures & (1 << dir)) != 0) {
-                    board[move.to + directions[dir]] = Piece::NONE;
+                    remove_dwarf(move.to + directions[dir]);
                 }
             }
             dwarfs_remaining -= std::popcount(move.captures); // Bitboard of captures, popcount many dwarves captured
@@ -75,8 +80,13 @@ void Board::make_move(Move move) {
 
 void Board::unmake_move(Move move) {
     change_to_move();
-    board[move.from] = board[move.to];
-    board[move.to] = Piece::NONE;
+    if (move.to_move == Dwarf) {
+        remove_dwarf(move.to);
+        add_dwarf(move.from);
+    } else {
+        board[move.from] = board[move.to];
+        board[move.to] = Piece::NONE;
+    }
     num_captured -= std::popcount(move.captures);
 
     if (move.captures != NO_CAPTURES) {
@@ -86,7 +96,7 @@ void Board::unmake_move(Move move) {
         } else {
             for (int dir = 0; dir < directions.size(); dir++) {
                 if ((move.captures & (1 << dir)) != 0) {
-                    board[move.to + directions[dir]] = Piece::DWARF;
+                    add_dwarf(move.to + directions[dir]);
                 }
             }
             dwarfs_remaining += std::popcount(move.captures); // Bitboard of captures, popcount many dwarves uncaptured
@@ -134,4 +144,12 @@ EvalType Board::get_material() const {
 
 Indexer::SmallIndex Board::get_index() {
     return indexer.small_index(*this);
+}
+
+void Board::remove_dwarf(Square square) {
+    board[square] = Piece::NONE;
+}
+
+void Board::add_dwarf(Square square) {
+    board[square] = Piece::DWARF;
 }
