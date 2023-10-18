@@ -18,4 +18,5 @@ add_executable(Thud main.cpp Board.h
         perft_tt.h
         Indexer.cpp
         Indexer.h
-        Timer.h)
+        Timer.h
+        TranspositionTable.h)
