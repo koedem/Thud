@@ -13,10 +13,9 @@ class Board {
      */
     int num_captured;
 
-    /**
-     * Points score from dwarf point of view.
-     */
-     int dwarfs_remaining, trolls_remaining;
+    int dwarfs_remaining, trolls_remaining;
+
+    int dwarf_connections = 0;
 
     Indexer indexer;
 
@@ -38,6 +37,8 @@ public:
     [[nodiscard]] int number_of_captures() const;
 
     [[nodiscard]] EvalType get_material() const;
+
+    [[nodiscard]] EvalType get_eval() const;
 
     Indexer::SmallIndex get_index();
 

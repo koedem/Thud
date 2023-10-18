@@ -148,8 +148,24 @@ Indexer::SmallIndex Board::get_index() {
 
 void Board::remove_dwarf(Square square) {
     board[square] = Piece::NONE;
+
+    for (int dir = 0; dir < directions.size(); dir++) {
+        if (board[square + directions[dir]] == Piece::DWARF) {
+            dwarf_connections--;
+        }
+    }
 }
 
 void Board::add_dwarf(Square square) {
     board[square] = Piece::DWARF;
+
+    for (int dir = 0; dir < directions.size(); dir++) {
+        if (board[square + directions[dir]] == Piece::DWARF) {
+            dwarf_connections++;
+        }
+    }
+}
+
+EvalType Board::get_eval() const {
+    return get_material() + dwarf_connections;
 }
