@@ -18,5 +18,9 @@ public:
 
     EvalType nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType beta);
 
+    EvalType null_window_search(Board &board, uint8_t depth, EvalType beta);
+
+    EvalType pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType beta);
+
     bool tt_probe(Board &board, Move &move, EvalType &alpha, EvalType &beta, int depth);
 };

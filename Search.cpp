@@ -40,9 +40,9 @@ bool Search::tt_probe(Board& board, Move& move, EvalType& alpha, EvalType& beta,
 EvalType Search::nega_minimax(Board &board, uint8_t depth) {
     if (depth == 0) {
         if (board.get_to_move() == Dwarf) {
-            return board.get_material();
+            return board.get_eval();
         } else {
-            return -board.get_material();
+            return -board.get_eval();
         }
     }
 
@@ -80,9 +80,9 @@ EvalType Search::nega_minimax(Board &board, uint8_t depth) {
 EvalType Search::nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType beta) {
     if (depth == 0) {
         if (board.get_to_move() == Dwarf) {
-            return board.get_material();
+            return board.get_eval();
         } else {
-            return -board.get_material();
+            return -board.get_eval();
         }
     }
 
@@ -122,5 +122,104 @@ EvalType Search::nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType 
         tt.emplace(indexer.small_index(board), {eval, best_move, depth, type});
     }
 
+    return eval;
+}
+
+EvalType Search::null_window_search(Board &board, uint8_t depth, EvalType beta) {
+    if (depth == 0) {
+        if (board.get_to_move() == Dwarf) {
+            return board.get_eval();
+        } else {
+            return -board.get_eval();
+        }
+    }
+
+    /*if (USE_TT && depth >= 20) { TODO
+        EvalType tt_eval = tt.at(indexer.small_index(board), depth).eval;
+        if (tt_eval != NO_EVAL) {
+            return tt_eval;
+        }
+    }*/
+
+    EvalType eval = MIN_EVAL;
+    Move tt_move = NO_MOVE;
+    EvalType alpha = beta - 1;
+    Bound_Type type;
+    std::vector<Move> moves;
+    move_gen.generate_moves(moves, board);
+
+    for (auto& move : moves) {
+        board.make_move(move);
+
+        EvalType inner_eval = -null_window_search(board, depth - 1, -beta + 1);
+        board.unmake_move(move);
+        if (inner_eval > eval) {
+            eval = inner_eval;
+            tt_move = move;
+            if (eval >= beta) {
+                type = LOWER_BOUND;
+                break;
+            }
+        }
+    }
+
+    if (USE_TT && depth >= 2 && type == EXACT) { // TODO
+        tt.emplace(board.get_index(), {eval, tt_move, depth, type});
+    }
+
+    return eval;
+}
+
+EvalType Search::pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType beta) {
+    if (depth == 0) {
+        if (board.get_to_move() == Dwarf) {
+            return board.get_eval();
+        } else {
+            return -board.get_eval();
+        }
+    }
+
+    if (USE_TT && depth >= 20) { // TODO
+        EvalType tt_eval = tt.at(indexer.small_index(board), depth).eval;
+        if (tt_eval != NO_EVAL) {
+            return tt_eval;
+        }
+    }
+
+    EvalType eval = MIN_EVAL;
+    Move tt_move = NO_MOVE;
+    Bound_Type type;
+    std::vector<Move> moves;
+    move_gen.generate_moves(moves, board);
+
+    bool search_full_window = true;
+    for (auto& move : moves) {
+        board.make_move(move);
+
+        EvalType inner_eval;
+        if (search_full_window || (inner_eval = -null_window_search(board, depth - 1, -alpha)) > alpha){
+            inner_eval = -pv_search(board, depth - 1, -beta, -alpha);
+            search_full_window = false;
+        }
+        board.unmake_move(move);
+
+        if (inner_eval > eval) {
+            eval = inner_eval;
+            tt_move = move; // If it stays this way, this is the best move
+            if (eval >= beta) {
+                type = LOWER_BOUND;
+                break;
+            }
+            if (eval > alpha) {
+                alpha = eval;
+                type = EXACT; // We raised alpha, so it's no longer a lower bound, either exact or upper bound
+            }
+
+        }
+    }
+
+    if (USE_TT && depth >= 2 && type == EXACT) {
+        tt.emplace(indexer.small_index(board), {eval, tt_move, depth, type});
+    }
     return eval;
 }
