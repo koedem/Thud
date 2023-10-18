@@ -33,6 +33,10 @@ Indexer::SmallIndex Indexer::small_index(Board& board) {
 
     auto piece_index = index_from_piece_positions_without_piece_count<boost::multiprecision::uint128_t> (piece_locations);
     auto troll_index = index_from_piece_positions_without_piece_count<uint32_t> (troll_locations_within_piece_locations, piece_locations.size());
+    if (board.get_to_move() == Dwarf) {
+        troll_index |= 1 << 31; // Encode how to move it is in a free bit
+    }
+
     uint8_t material = (piece_locations.size() - troll_locations_within_piece_locations.size() - 1) * 8 + (troll_locations_within_piece_locations.size() - 1);
     return {piece_index, troll_index, material};
 }
@@ -128,6 +132,10 @@ Indexer::SmallIndex Indexer::symmetric_small_index(Board& board) {
     }
 
     result.trolls = index_from_piece_positions_without_piece_count<uint32_t> (troll_locations_within_piece_locations, piece_locations.size());
+    if (board.get_to_move() == Dwarf) {
+        result.trolls |= 1 << 31; // Encode how to move it is in a free bit
+    }
+
     uint8_t material = (piece_locations.size() - troll_locations_within_piece_locations.size() - 1) * 8 + (troll_locations_within_piece_locations.size() - 1);
     result.material = material;
 
