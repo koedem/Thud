@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 #include "Utils.h"
 #include "MoveGenerator.h"
 #include "Tablebase_test_128bit.h"
@@ -41,13 +42,31 @@ uint64_t perft(Board& board, int depth) {
     return result;
 }
 
+void pv_search_test(int depth_limit) {
+    Board board(Position::Full);
+    board.print();
+    TranspositionTable tt;
+    Search search(tt);
+    for (int depth = 1; depth <= depth_limit; depth++) {
+        Timer timer;
+        int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
+        std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
+        tt.print_pv(board, depth);
+        tt.print_size();
+    }
+}
+
 void search_test(int depth_limit) {
     Board board(Position::Full);
     board.print();
-    Search search;
+    TranspositionTable tt;
+    Search search(tt);
     for (int depth = 1; depth <= depth_limit; depth++) {
-        int eval = search.nega_max(board, depth, depth);
-        std::cout << "Depth " << depth << ": " << eval << std::endl;
+        Timer timer;
+        int eval = search.nega_max(board, depth, MIN_EVAL, MAX_EVAL);
+        std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
+        tt.print_pv(board, depth);
+        tt.print_size();
     }
 }
 
@@ -59,15 +78,90 @@ void perft_test(Board& board, int depth_limit) {
     }
 }
 
+void game(int depth_limit) {
+    Board board(Position::Full);
+    board.print();
+    TranspositionTable tt;
+    Search search(tt);
+    for (int i = 0; i < 500; i++) {
+        for (int depth = 1; depth <= depth_limit; depth++) {
+            Timer timer;
+            int eval = search.nega_max(board, depth, MIN_EVAL, MAX_EVAL);
+            std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
+            tt.print_pv(board, depth);
+            tt.print_size();
+        }
+        auto move = tt.at(board.get_index(), depth_limit).move;
+        board.make_move(move);
+        std::cout << std::endl << "New position" << std::endl << std::endl;
+        board.print(move);
+        std::cout << std::endl << std::endl;
+    }
+}
+
+void game(int depth_limit, uint64_t min_time_micros) {
+    Board board(Position::Full);
+    board.print();
+    TranspositionTable tt;
+    Search search(tt);
+    for (int i = 0; i < 500; i++) {
+        Timer timer;
+        for (int depth = 1; depth <= depth_limit || timer.elapsed() < min_time_micros; depth++) {
+            timer.reset();
+            int eval = search.nega_max(board, depth, MIN_EVAL, MAX_EVAL);
+            std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
+            tt.print_pv(board, depth);
+            tt.print_size();
+        }
+        auto move = tt.at(board.get_index(), depth_limit).move;
+        board.make_move(move);
+        std::cout << std::endl << "New position" << std::endl << std::endl;
+        board.print(move);
+        std::cout << std::endl << std::endl;
+    }
+}
+
 int main() {
     setup_valid_squares();
     //Tablebase_test test;
     //test.test_indexing(4);
 
     Board board(Position::Full);
-    Perft perft;
-    perft.root_perft(board, 6);
-    //search_test(5);
+
+    std::vector<Move> moves;
+    move_gen.generate_moves(moves, board);
+
+    game(6, 10000000);
+
+    //Perft_TT tt;
+    //Perft perft(tt);
+
+    //perft.root_perft(board, 7, true);
+    /*for (Move move : moves) {
+        board.make_move(move);
+        board.print();
+
+        int num_threads = 16;
+        std::vector<Perft> perfts;
+        perfts.reserve(num_threads);
+        for (int i = 0; i < num_threads; i++) {
+            perfts.emplace_back(tt);
+        }
+
+
+        std::vector<std::thread> search_threads;
+        for (size_t i = 0; i < num_threads; i++) {
+            auto func = std::bind(&Perft::root_perft, perfts[i], board, 6, i == 0);
+            search_threads.emplace_back(func);
+        }
+        for (auto &thread: search_threads) {
+            thread.join();
+        }
+        tt.store();
+        board.unmake_move(move);
+    }*/
+
+    //search_test(7);
 
     //Board board(Position::Endgame);
     //perft_test(board, 6);
