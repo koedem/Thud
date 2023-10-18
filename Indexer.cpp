@@ -1,5 +1,6 @@
 
 #include "Indexer.h"
+#include "Board.h"
 
 template<class Value>
 Value Indexer::index_from_piece_positions_without_piece_count(std::vector<int> &pieces, int n_choose) {
@@ -131,4 +132,51 @@ Indexer::SmallIndex Indexer::symmetric_small_index(Board& board) {
     result.material = material;
 
     return result;
+}
+
+void Indexer::prepare_binoms() {
+    for (int i = 0; i < 165; i++) {
+        for (int j = 0; j < 41; j++) {
+            binoms[i][j] = n_choose_k(i, j);
+        }
+    }
+}
+
+void Indexer::translate_squares() {
+    int i = 0;
+    for (int square = 0; square < 256; square++) {
+        if (square_on_board(square)) {
+            index_to_square[i] = square;
+            i++;
+        }
+    }
+}
+
+int Indexer::square_from_file_row(int file, int row, int symmetry) {
+    if ((symmetry & 4) != 0) {
+        file = 15 - file;
+    }
+    if ((symmetry & 2) != 0) {
+        row = 15 - row;
+    }
+
+    if (symmetry % 2 == 1) {
+        std::swap(row, file);
+    }
+    return 16 * row + file;
+}
+
+void Indexer::symmetry_translations() {
+    for (int symmetry = 0; symmetry < 8; symmetry++) {
+        int i = 0;
+        for (int row = 0; row < 16; row++) {
+            for (int file = 0; file < 16; file++) {
+                int square = square_from_file_row(file, row, symmetry);
+                if (square_on_board(square)) {
+                    symmetric_indices_to_squares[symmetry][i] = square;
+                    i++;
+                }
+            }
+        }
+    }
 }

@@ -129,3 +129,7 @@ int Board::number_of_captures() const {
 EvalType Board::get_material() const {
     return material;
 }
+
+Indexer::SmallIndex Board::get_index() {
+    return indexer.small_index(*this);
+}

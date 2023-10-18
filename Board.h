@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils.h"
+#include "Indexer.h"
 
 class Board {
 
@@ -16,6 +17,8 @@ class Board {
      * Points score from dwarf point of view.
      */
     EvalType material;
+
+    Indexer indexer;
 
 public:
     explicit Board(Position position);
@@ -35,6 +38,8 @@ public:
     [[nodiscard]] int number_of_captures() const;
 
     [[nodiscard]] EvalType get_material() const;
+
+    Indexer::SmallIndex get_index();
 
 private:
     template<Position TYPE>
