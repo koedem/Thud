@@ -11,7 +11,8 @@ void Board::fill_position<Position::Full>() {
             = board[212] = board[218] = board[229] = board[230] = board[232] = board[233] = Piece::DWARF;
     board[102] = board[103] = board[104] = board[118] = board[120] = board[134] = board[135] = board[136] = Piece::TROLL;
 
-    material = 0;
+    dwarfs_remaining = 32;
+    trolls_remaining = 8;
     num_captured = 0;
 }
 
@@ -20,7 +21,8 @@ void Board::fill_position<Position::Endgame>() {
     board[233] = Piece::DWARF;
     board[102] = board[103] = board[104] = board[118] = board[120] = board[134] = board[135] = board[136] = Piece::TROLL;
 
-    material = -31;
+    dwarfs_remaining = 1;
+    trolls_remaining = 8;
     num_captured = 31;
 }
 
@@ -58,14 +60,14 @@ void Board::make_move(Move move) {
 
     if (move.captures != NO_CAPTURES) {
         if (move.to_move == Dwarf) {
-            material += 4; // Dwarfs capture a troll
+            trolls_remaining--; // Dwarfs capture a troll
         } else {
             for (int dir = 0; dir < directions.size(); dir++) {
                 if ((move.captures & (1 << dir)) != 0) {
                     board[move.to + directions[dir]] = Piece::NONE;
                 }
             }
-            material -= std::popcount(move.captures); // Bitboard of captures, popcount many dwarves captured
+            dwarfs_remaining -= std::popcount(move.captures); // Bitboard of captures, popcount many dwarves captured
         }
     }
     change_to_move();
@@ -80,14 +82,14 @@ void Board::unmake_move(Move move) {
     if (move.captures != NO_CAPTURES) {
         if (move.to_move == Dwarf) { // Dwarfs uncapture a troll
             board[move.to] = Piece::TROLL;
-            material -= 4;
+            trolls_remaining++;
         } else {
             for (int dir = 0; dir < directions.size(); dir++) {
                 if ((move.captures & (1 << dir)) != 0) {
                     board[move.to + directions[dir]] = Piece::DWARF;
                 }
             }
-            material += std::popcount(move.captures); // Bitboard of captures, popcount many dwarves uncaptured
+            dwarfs_remaining += std::popcount(move.captures); // Bitboard of captures, popcount many dwarves uncaptured
         }
     }
 }
@@ -127,7 +129,7 @@ int Board::number_of_captures() const {
 }
 
 EvalType Board::get_material() const {
-    return material;
+    return dwarfs_remaining - trolls_remaining * 4;
 }
 
 Indexer::SmallIndex Board::get_index() {

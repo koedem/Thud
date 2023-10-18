@@ -16,7 +16,7 @@ class Board {
     /**
      * Points score from dwarf point of view.
      */
-    EvalType material;
+     int dwarfs_remaining, trolls_remaining;
 
     Indexer indexer;
 
