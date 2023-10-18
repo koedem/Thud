@@ -10,7 +10,7 @@
 /**
  * Using values Dwarf = true, Troll = false.
  */
- enum Colour {
+ enum Colour : uint8_t {
      Dwarf = true, Troll = false
  };
 
@@ -43,9 +43,10 @@ const std::vector<Direction> directions = { Direction::nw, Direction::north, Dir
 using Captures = uint8_t;
 constexpr Captures NO_CAPTURES = 0;
 
-using EvalType = int32_t;
+using EvalType = int16_t;
 constexpr EvalType MIN_EVAL = -10000;
 constexpr EvalType MAX_EVAL = 10000;
+constexpr EvalType NO_EVAL = -12345;
 
 enum class Piece {
     NONE, DWARF, TROLL, STONE, OUTSIDE
@@ -78,7 +79,13 @@ struct Move {
         std::cout << "-";
         ::print_square(to);
     }
+
+    bool operator== (const Move& other) const {
+        return to_move == other.to_move && from == other.from && to == other.to && captures == other.captures;
+    }
 };
+
+static constexpr Move NO_MOVE = { Dwarf, 0, 0, 0 };
 
 struct Spin_Lock {
     std::atomic<bool> spin_lock = false;
