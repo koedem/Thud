@@ -182,7 +182,7 @@ EvalType Board::get_material() const {
 }
 
 Indexer::SmallIndex Board::get_index() {
-    return indexer.small_index(*this);
+    return indexer.symmetric_small_index(*this);
 }
 
 void Board::remove_dwarf(Square square) {
