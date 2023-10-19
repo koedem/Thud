@@ -63,7 +63,7 @@ void search_test(int depth_limit) {
     Search search(tt);
     for (int depth = 1; depth <= depth_limit; depth++) {
         Timer timer;
-        int eval = search.nega_max(board, depth, MIN_EVAL, MAX_EVAL);
+        int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
         std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
         tt.print_pv(board, depth);
         tt.print_size();
@@ -83,10 +83,10 @@ void game(int depth_limit) {
     board.print();
     TranspositionTable tt;
     Search search(tt);
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 300; i++) {
         for (int depth = 1; depth <= depth_limit; depth++) {
             Timer timer;
-            int eval = search.nega_max(board, depth, MIN_EVAL, MAX_EVAL);
+            int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
             std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
             tt.print_pv(board, depth);
             tt.print_size();
@@ -96,28 +96,40 @@ void game(int depth_limit) {
         std::cout << std::endl << "New position" << std::endl << std::endl;
         board.print(move);
         std::cout << std::endl << std::endl;
+        tt.clear();
     }
 }
 
-void game(int depth_limit, uint64_t min_time_micros) {
+void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t troll_time_micros) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt;
     Search search(tt);
-    for (int i = 0; i < 500; i++) {
+
+    auto loop_condition = [&](int depth, uint64_t time) {
+        if (board.get_to_move() == Dwarf) {
+            return depth <= dwarf_depth || time <= dwarf_time_micros;
+        } else {
+            return depth <= troll_depth || time <= troll_time_micros;
+        }
+    };
+
+    for (int i = 0; i < 300; i++) {
         Timer timer;
-        for (int depth = 1; depth <= depth_limit || timer.elapsed() < min_time_micros; depth++) {
+        int depth = 1;
+        for (; loop_condition(depth, timer.elapsed()); depth++) {
             timer.reset();
-            int eval = search.nega_max(board, depth, MIN_EVAL, MAX_EVAL);
+            int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
             std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
             tt.print_pv(board, depth);
             tt.print_size();
         }
-        auto move = tt.at(board.get_index(), depth_limit).move;
+        auto move = tt.at(board.get_index(), depth - 1).move;
         board.make_move(move);
         std::cout << std::endl << "New position" << std::endl << std::endl;
         board.print(move);
         std::cout << std::endl << std::endl;
+        tt.clear();
     }
 }
 
@@ -131,7 +143,7 @@ int main() {
     std::vector<Move> moves;
     move_gen.generate_moves(moves, board);
 
-    game(6, 10000000);
+    //game(7, 4, 20000000, 0);
 
     //Perft_TT tt;
     //Perft perft(tt);
@@ -161,7 +173,7 @@ int main() {
         board.unmake_move(move);
     }*/
 
-    //search_test(7);
+    search_test(7);
 
     //Board board(Position::Endgame);
     //perft_test(board, 6);
