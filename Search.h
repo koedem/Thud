@@ -9,7 +9,6 @@ static constexpr bool USE_TT = true;
 class Search {
     MoveGenerator move_gen;
     TranspositionTable& tt;
-    Indexer indexer;
 
 public:
     EvalType nega_minimax(Board& board, uint8_t depth);

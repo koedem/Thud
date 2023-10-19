@@ -7,6 +7,16 @@
 
 #include "MoveGenerator.h"
 
+
+constexpr int find(const std::vector<Move>& moves, Move move) {
+    for (int i = 0; i < moves.size(); i++) {
+        if (moves[i] == move) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 bool Search::tt_probe(Board& board, Move& move, EvalType& alpha, EvalType& beta, int depth) {
     TT_Info tt_entry = tt.at(board.get_index(), depth);
     if (tt_entry.eval != NO_EVAL) {
@@ -47,7 +57,7 @@ EvalType Search::nega_minimax(Board &board, uint8_t depth) {
     }
 
     if (USE_TT && depth >= 2) {
-        EvalType tt_eval = tt.at(indexer.small_index(board), depth).eval;
+        EvalType tt_eval = tt.at(board.get_index(), depth).eval;
         if (tt_eval != NO_EVAL) {
             return tt_eval;
         }
@@ -70,8 +80,8 @@ EvalType Search::nega_minimax(Board &board, uint8_t depth) {
     }
 
     if (USE_TT && depth >= 2) {
-        auto index = indexer.small_index(board);
-        tt.emplace(indexer.small_index(board), {eval, best_move, depth, Bound_Type::EXACT});
+        auto index = board.get_index();
+        tt.emplace(index, {eval, best_move, depth, Bound_Type::EXACT});
     }
 
     return eval;
@@ -86,9 +96,10 @@ EvalType Search::nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType 
         }
     }
 
-    if (USE_TT && depth >= 20) {
-        EvalType tt_eval = tt.at(indexer.small_index(board), depth).eval;
-        if (tt_eval != NO_EVAL) {
+    if (USE_TT && depth >= 2) { // TODO
+        auto tt_info =  tt.at(board.get_index(), depth);
+        EvalType tt_eval = tt_info.eval;
+        if (tt_eval != NO_EVAL && tt_info.type == EXACT) {
             return tt_eval;
         }
     }
@@ -119,7 +130,7 @@ EvalType Search::nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType 
     }
 
     if (USE_TT && depth >= 2 && type == EXACT) {
-        tt.emplace(indexer.small_index(board), {eval, best_move, depth, type});
+        tt.emplace(board.get_index(), {eval, best_move, depth, type});
     }
 
     return eval;
@@ -134,19 +145,23 @@ EvalType Search::null_window_search(Board &board, uint8_t depth, EvalType beta) 
         }
     }
 
-    /*if (USE_TT && depth >= 20) { TODO
-        EvalType tt_eval = tt.at(indexer.small_index(board), depth).eval;
-        if (tt_eval != NO_EVAL) {
-            return tt_eval;
-        }
-    }*/
-
-    EvalType eval = MIN_EVAL;
     Move tt_move = NO_MOVE;
     EvalType alpha = beta - 1;
-    Bound_Type type;
+    EvalType eval = MIN_EVAL;
+    if (USE_TT && depth >= 2) { // TODO
+        if (tt_probe(board, tt_move, alpha, beta, depth)) {
+            return alpha;
+        }
+    }
+
+    Bound_Type type = UPPER_BOUND;
     std::vector<Move> moves;
     move_gen.generate_moves(moves, board);
+
+    int tt_move_index = find(moves, tt_move);
+    if (tt_move_index > 0) {
+        std::swap(moves[0], moves[tt_move_index]);
+    }
 
     for (auto& move : moves) {
         board.make_move(move);
@@ -163,7 +178,7 @@ EvalType Search::null_window_search(Board &board, uint8_t depth, EvalType beta) 
         }
     }
 
-    if (USE_TT && depth >= 2 && type == EXACT) { // TODO
+    if (USE_TT && depth >= 2) { // TODO
         tt.emplace(board.get_index(), {eval, tt_move, depth, type});
     }
 
@@ -179,18 +194,21 @@ EvalType Search::pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType
         }
     }
 
-    if (USE_TT && depth >= 20) { // TODO
-        EvalType tt_eval = tt.at(indexer.small_index(board), depth).eval;
-        if (tt_eval != NO_EVAL) {
-            return tt_eval;
+    Move tt_move = NO_MOVE;
+    if (USE_TT && depth >= 2) { // TODO
+        if (tt_probe(board, tt_move, alpha, beta, depth)) {
+            return alpha;
         }
     }
-
     EvalType eval = MIN_EVAL;
-    Move tt_move = NO_MOVE;
-    Bound_Type type;
+    Bound_Type type = UPPER_BOUND;
     std::vector<Move> moves;
     move_gen.generate_moves(moves, board);
+
+    int tt_move_index = find(moves, tt_move);
+    if (tt_move_index > 0) {
+        std::swap(moves[0], moves[tt_move_index]); // Search the TT move first
+    }
 
     bool search_full_window = true;
     for (auto& move : moves) {
@@ -218,8 +236,8 @@ EvalType Search::pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType
         }
     }
 
-    if (USE_TT && depth >= 2 && type == EXACT) {
-        tt.emplace(indexer.small_index(board), {eval, tt_move, depth, type});
+    if (USE_TT && depth >= 2 || type == EXACT) {
+        tt.emplace(board.get_index(), {eval, tt_move, depth, type});
     }
     return eval;
 }
