@@ -15,7 +15,7 @@ struct TT_Info {
     EvalType eval = NO_EVAL;
     Move move = NO_MOVE;
     uint8_t depth = 0;
-    Bound_Type type;
+    Bound_Type type = UPPER_BOUND;
 
     bool operator<(TT_Info& other) const {
         if (type == EXACT && other.type != EXACT) {
@@ -151,8 +151,14 @@ public:
         return static_cast<uint64_t>((index.dwarves + index.trolls + depth) % size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
     }
 
+    void clear() {
+        missed_writes = 0;
+        table.clear();
+        table.resize(size);
+    }
+
 private:
-    static constexpr uint32_t size = 1 << 24;
+    static constexpr uint32_t size = 1 << 22;
     std::vector<Bucket> table;
 
     uint64_t missed_writes = 0;
