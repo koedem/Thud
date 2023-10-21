@@ -11,6 +11,8 @@ MoveGenerator move_gen;
 
 int most_captures = 0;
 
+constexpr uint32_t num_bits = 27;
+
 std::vector<Move> pv(128);
 int pv_index = 0;
 
@@ -45,7 +47,7 @@ uint64_t perft(Board& board, int depth) {
 void pv_search_test(int depth_limit) {
     Board board(Position::Full);
     board.print();
-    TranspositionTable tt;
+    TranspositionTable tt(num_bits);
     Search search(tt);
     for (int depth = 1; depth <= depth_limit; depth++) {
         Timer timer;
@@ -59,7 +61,7 @@ void pv_search_test(int depth_limit) {
 void search_test(int depth_limit) {
     Board board(Position::Full);
     board.print();
-    TranspositionTable tt;
+    TranspositionTable tt(num_bits);
     Search search(tt);
     for (int depth = 1; depth <= depth_limit; depth++) {
         Timer timer;
@@ -81,7 +83,7 @@ void perft_test(Board& board, int depth_limit) {
 void game(int depth_limit) {
     Board board(Position::Full);
     board.print();
-    TranspositionTable tt;
+    TranspositionTable tt(num_bits);
     Search search(tt);
     for (int i = 0; i < 300; i++) {
         for (int depth = 1; depth <= depth_limit; depth++) {
@@ -103,7 +105,7 @@ void game(int depth_limit) {
 void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t troll_time_micros) {
     Board board(Position::Full);
     board.print();
-    TranspositionTable tt;
+    TranspositionTable tt(num_bits);
     Search search(tt);
 
     auto loop_condition = [&](int depth, uint64_t time) {

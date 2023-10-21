@@ -16,8 +16,14 @@ struct TT_Info {
     Move move = NO_MOVE;
     uint8_t depth = 0;
     Bound_Type type = UPPER_BOUND;
+    uint8_t proc_number = 0;
 
-    bool operator<(TT_Info& other) const {
+    bool operator<(const TT_Info& other) const {
+        if (proc_number > 0 && other.proc_number == 0) {
+            return false;
+        } else if (proc_number == 0 && other.proc_number > 0) {
+            return true;
+        }
         if (type == EXACT && other.type != EXACT) {
             return false;
         } else if (type != EXACT && other.type == EXACT) {
@@ -40,6 +46,10 @@ private:
         [[no_unique_address]] Index index;
         [[no_unique_address]] TT_Info value;
         Spin_Lock lock;
+
+        bool operator<(const Entry& other) const {
+            return value < other.value;
+        }
     };
 
     struct alignas(64) Bucket {
@@ -74,21 +84,24 @@ public:
         }
     }
 
-    TranspositionTable() : table(size) {
+    explicit TranspositionTable(uint64_t number_of_bits) : size(1 << number_of_bits), table(size) {
         load(storage_path);
     }
 
-    void print_size() {
-        uint64_t num_elements = 0;
-        for (Bucket& bucket : table) {
+    void print_size() const {
+        uint64_t num_elements = 0, exact_entries = 0;
+        for (const Bucket& bucket : table) {
             for (auto & entry : bucket.entries) {
                 if (entry.index.dwarves != 0) {
                     num_elements++;
+                    if (entry.value.type == EXACT) {
+                        exact_entries++;
+                    }
                 }
             }
         }
-        std::cout << "Table elements: " << num_elements << ", missed writes: " << missed_writes << " bucket count "
-                  << table.size() << ", bucket capacity: " << table.capacity() << std::endl;
+        std::cout << "Table elements: " << num_elements << ", exact entries: " << exact_entries << ", missed writes: "
+            << missed_writes << " bucket count " << table.size() << ", bucket capacity: " << table.capacity() << std::endl;
     }
 
     void emplace(Index index, TT_Info value) {
@@ -124,7 +137,8 @@ public:
     }
 
     bool contains(const Index& index, uint16_t depth) {
-        auto & entries = table[pos(index, depth)].entries;
+        auto position = pos(index, depth);
+        auto & entries = table[position].entries;
         std::lock_guard<Spin_Lock> guard(entries[0].lock);
         for (auto& entry : entries) {
             if (entry.index == index && entry.value.depth == depth) {
@@ -147,8 +161,8 @@ public:
         std::cout << std::endl;
     }
 
-    static inline uint64_t pos(const Index& index, uint16_t depth) {
-        return static_cast<uint64_t>((index.dwarves + index.trolls + depth) % size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
+    uint64_t pos(const Index& index, uint16_t depth) {
+        return static_cast<uint64_t>((index.dwarves + index.trolls + depth) & (size - 1)); // size is a power of two
     }
 
     void clear() {
@@ -158,7 +172,7 @@ public:
     }
 
 private:
-    static constexpr uint32_t size = 1 << 22;
+    const uint32_t size;
     std::vector<Bucket> table;
 
     uint64_t missed_writes = 0;
