@@ -35,7 +35,7 @@ struct TT_Info {
 
 class TranspositionTable {
 
-    using Index = Indexer::SmallIndex;
+    using Index = Indexer::Index;
 
 private:
     static constexpr uint32_t entries_per_bucket = 4;
@@ -92,7 +92,7 @@ public:
         uint64_t num_elements = 0, exact_entries = 0;
         for (const Bucket& bucket : table) {
             for (auto & entry : bucket.entries) {
-                if (entry.index.dwarves != 0) {
+                if (entry.index.piece_locations != 0) {
                     num_elements++;
                     if (entry.value.type == EXACT) {
                         exact_entries++;
@@ -162,7 +162,7 @@ public:
     }
 
     uint64_t pos(const Index& index, uint16_t depth) {
-        return static_cast<uint64_t>((index.dwarves + index.trolls + depth) & (size - 1)); // size is a power of two
+        return static_cast<uint64_t>((index.piece_locations + index.piece_order + depth) & (size - 1)); // size is a power of two
     }
 
     void clear() {

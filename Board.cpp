@@ -181,7 +181,7 @@ EvalType Board::get_material() const {
     return dwarfs_remaining - trolls_remaining * 4;
 }
 
-Indexer::SmallIndex Board::get_index() {
+Indexer::Index Board::get_index() {
     return indexer.symmetric_small_index(*this);
 }
 

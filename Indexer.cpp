@@ -18,7 +18,7 @@ Value Indexer::index_from_piece_positions_without_piece_count(std::vector<int> &
     return index;
 }
 
-Indexer::SmallIndex Indexer::small_index(Board& board) {
+Indexer::Index Indexer::small_index(Board& board) {
     std::vector<int> piece_locations;
     std::vector<int> troll_locations_within_piece_locations;
     for (int id = 0; id < 164; id++) {
@@ -74,8 +74,8 @@ void Indexer::small_smallest_encoding_order(Board& board, std::vector<int>& piec
     }
 }
 
-Indexer::SmallIndex Indexer::symmetric_small_index(Board& board) {
-    SmallIndex result;
+Indexer::Index Indexer::symmetric_small_index(Board& board) {
+    Index result;
 
     int most_recent_symmetry = this->most_recent_symmetry;
     std::vector<int> piece_locations;
@@ -89,7 +89,7 @@ Indexer::SmallIndex Indexer::symmetric_small_index(Board& board) {
     bool smallest[8] = { true, true, true, true, true, true, true, true };
     small_smallest_encoding_order(board, piece_locations, smallest);
 
-    result.dwarves = index_from_piece_positions_without_piece_count<boost::multiprecision::uint128_t> (piece_locations);
+    result.piece_locations = index_from_piece_positions_without_piece_count<boost::multiprecision::uint128_t> (piece_locations);
 
     std::vector<int> troll_locations_within_piece_locations;
     most_recent_symmetry = this->most_recent_symmetry;
@@ -131,9 +131,9 @@ Indexer::SmallIndex Indexer::symmetric_small_index(Board& board) {
         }
     }
 
-    result.trolls = index_from_piece_positions_without_piece_count<uint32_t> (troll_locations_within_piece_locations, piece_locations.size());
+    result.piece_order = index_from_piece_positions_without_piece_count<uint32_t> (troll_locations_within_piece_locations, piece_locations.size());
     if (board.get_to_move() == Dwarf) {
-        result.trolls |= 1 << 31; // Encode how to move it is in a free bit
+        result.piece_order |= 1 << 31; // Encode how to move it is in a free bit
     }
 
     uint8_t material = (piece_locations.size() - troll_locations_within_piece_locations.size() - 1) * 8 + (troll_locations_within_piece_locations.size() - 1);

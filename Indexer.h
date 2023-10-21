@@ -35,14 +35,14 @@ class Indexer {
     void small_smallest_encoding_order(Board& board, std::vector<int>& piece_locations, bool smallest[8]);
 
 public:
-    struct SmallIndex {
-        [[no_unique_address]] boost::multiprecision::uint128_t dwarves; // TODO piece_locations;
-        uint32_t trolls; // TODO piece_order;
+    struct Index {
+        [[no_unique_address]] boost::multiprecision::uint128_t piece_locations; // TODO piece_locations;
+        uint32_t piece_order; // TODO piece_order;
         uint8_t material;
 
-        bool operator==(const Indexer::SmallIndex& other) const
+        bool operator==(const Index& other) const
         {
-            return (dwarves == other.dwarves && trolls == other.trolls && material == other.material);
+            return (piece_locations == other.piece_locations && piece_order == other.piece_order && material == other.material);
         }
     };
 
@@ -52,7 +52,7 @@ public:
         symmetry_translations();
     };
 
-    SmallIndex small_index(Board& board);
+    Index small_index(Board& board);
 
-    SmallIndex symmetric_small_index(Board& board);
+    Index symmetric_small_index(Board& board);
 };

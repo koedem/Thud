@@ -9,11 +9,11 @@
 
 class Perft_TT {
 
-    using Index = Indexer::SmallIndex;
+    using Index = Indexer::Index;
 
 private:
     static constexpr uint32_t entries_per_bucket = 4;
-    static constexpr bool store_to_file = false;
+    static constexpr bool store_to_file = true;
     const std::string storage_path = "/media/kolja/Volume/StartPositionD7.tt";
 
     struct Entry {
@@ -63,7 +63,7 @@ public:
         uint64_t num_elements = 0;
         for (Bucket& bucket : table) {
             for (auto & entry : bucket.entries) {
-                if (entry.index.dwarves != 0) {
+                if (entry.index.piece_locations != 0) {
                     num_elements++;
                 }
             }
@@ -118,11 +118,11 @@ public:
     }
 
     static inline uint64_t pos(const Index& index, uint16_t depth) {
-        return static_cast<uint64_t>((index.dwarves + index.trolls + depth) % size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
+        return static_cast<uint64_t>((index.piece_locations + index.piece_order + depth) % size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
     }
 
 private:
-    static constexpr uint32_t size = 1 << 24;
+    static constexpr uint32_t size = 1 << 27;
     std::vector<Bucket> table;
 
     uint64_t missed_writes = 0;

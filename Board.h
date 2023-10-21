@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] EvalType get_eval() const;
 
-    Indexer::SmallIndex get_index();
+    Indexer::Index get_index();
 
 private:
     template<Position TYPE>
