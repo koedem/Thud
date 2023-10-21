@@ -206,5 +206,5 @@ void Board::add_dwarf(Square square) {
 }
 
 EvalType Board::get_eval() const {
-    return get_material() + dwarf_connections;
+    return get_material() * 2 + dwarf_connections;
 }
