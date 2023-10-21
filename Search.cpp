@@ -17,7 +17,7 @@ constexpr int find(const std::vector<Move>& moves, Move move) {
     return -1;
 }
 
-bool Search::tt_probe(Board& board, Move& move, EvalType& alpha, EvalType& beta, int depth) {
+bool Search::tt_probe(Move& move, EvalType& alpha, EvalType& beta, int depth) {
     TT_Info tt_entry = tt.at(board.get_index(), depth);
     if (tt_entry.eval != NO_EVAL) {
         assert(tt_entry.depth == depth);
@@ -47,8 +47,9 @@ bool Search::tt_probe(Board& board, Move& move, EvalType& alpha, EvalType& beta,
     return false;
 }
 
-EvalType Search::nega_minimax(Board &board, uint8_t depth) {
+EvalType Search::nega_minimax(uint8_t depth) {
     if (depth == 0) {
+        nodes++;
         if (board.get_to_move() == Dwarf) {
             return board.get_eval();
         } else {
@@ -70,7 +71,7 @@ EvalType Search::nega_minimax(Board &board, uint8_t depth) {
     for (auto move : moves) {
         board.make_move(move);
 
-        EvalType inner_eval = -nega_minimax(board, depth - 1);
+        EvalType inner_eval = -nega_minimax(depth - 1);
         if (inner_eval > eval) {
             eval = inner_eval;
             best_move = move;
@@ -87,8 +88,9 @@ EvalType Search::nega_minimax(Board &board, uint8_t depth) {
     return eval;
 }
 
-EvalType Search::nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType beta) {
+EvalType Search::nega_max(uint8_t depth, EvalType alpha, EvalType beta) {
     if (depth == 0) {
+        nodes++;
         if (board.get_to_move() == Dwarf) {
             return board.get_eval();
         } else {
@@ -112,7 +114,7 @@ EvalType Search::nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType 
     for (auto move : moves) {
         board.make_move(move);
 
-        EvalType inner_eval = -nega_max(board, depth - 1, -beta, -alpha);
+        EvalType inner_eval = -nega_max(depth - 1, -beta, -alpha);
         board.unmake_move(move);
         if (inner_eval > eval) {
             eval = inner_eval;
@@ -136,8 +138,9 @@ EvalType Search::nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType 
     return eval;
 }
 
-EvalType Search::null_window_search(Board &board, uint8_t depth, EvalType beta) {
+EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
     if (depth == 0) {
+        nodes++;
         if (board.get_to_move() == Dwarf) {
             return board.get_eval();
         } else {
@@ -149,7 +152,7 @@ EvalType Search::null_window_search(Board &board, uint8_t depth, EvalType beta) 
     EvalType alpha = beta - 1;
     EvalType eval = MIN_EVAL;
     if (USE_TT && depth >= 2) { // TODO
-        if (tt_probe(board, tt_move, alpha, beta, depth)) {
+        if (tt_probe(tt_move, alpha, beta, depth)) {
             return alpha;
         }
     }
@@ -166,7 +169,7 @@ EvalType Search::null_window_search(Board &board, uint8_t depth, EvalType beta) 
     for (auto& move : moves) {
         board.make_move(move);
 
-        EvalType inner_eval = -null_window_search(board, depth - 1, -beta + 1);
+        EvalType inner_eval = -null_window_search(depth - 1, -beta + 1);
         board.unmake_move(move);
         if (inner_eval > eval) {
             eval = inner_eval;
@@ -185,8 +188,9 @@ EvalType Search::null_window_search(Board &board, uint8_t depth, EvalType beta) 
     return eval;
 }
 
-EvalType Search::pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType beta) {
+EvalType Search::pv_search(uint8_t depth, EvalType alpha, EvalType beta) {
     if (depth == 0) {
+        nodes++;
         if (board.get_to_move() == Dwarf) {
             return board.get_eval();
         } else {
@@ -196,7 +200,7 @@ EvalType Search::pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType
 
     Move tt_move = NO_MOVE;
     if (USE_TT && depth >= 2) { // TODO
-        if (tt_probe(board, tt_move, alpha, beta, depth)) {
+        if (tt_probe(tt_move, alpha, beta, depth)) {
             return alpha;
         }
     }
@@ -215,8 +219,8 @@ EvalType Search::pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType
         board.make_move(move);
 
         EvalType inner_eval;
-        if (search_full_window || (inner_eval = -null_window_search(board, depth - 1, -alpha)) > alpha){
-            inner_eval = -pv_search(board, depth - 1, -beta, -alpha);
+        if (search_full_window || (inner_eval = -null_window_search(depth - 1, -alpha)) > alpha){
+            inner_eval = -pv_search(depth - 1, -beta, -alpha);
             search_full_window = false;
         }
         board.unmake_move(move);
@@ -240,4 +244,12 @@ EvalType Search::pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType
         tt.emplace(board.get_index(), {eval, tt_move, depth, type});
     }
     return eval;
+}
+
+void Search::reset_nodes() {
+    nodes = 0;
+}
+
+uint64_t Search::get_nodes() const {
+    return nodes;
 }

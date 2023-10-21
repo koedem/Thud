@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "Board.h"
 #include "MoveGenerator.h"
 #include "TranspositionTable.h"
@@ -7,19 +9,27 @@
 static constexpr bool USE_TT = true;
 
 class Search {
+
+private:
+    Board board;
+    uint64_t nodes = 0;
     MoveGenerator move_gen;
     TranspositionTable& tt;
 
 public:
-    EvalType nega_minimax(Board& board, uint8_t depth);
+    EvalType nega_minimax(uint8_t depth);
 
-    explicit Search(TranspositionTable& tt) : tt(tt) {};
+    Search(Board board, TranspositionTable& tt) : board(std::move(board)), tt(tt) {};
 
-    EvalType nega_max(Board &board, uint8_t depth, EvalType alpha, EvalType beta);
+    EvalType nega_max(uint8_t depth, EvalType alpha, EvalType beta);
 
-    EvalType null_window_search(Board &board, uint8_t depth, EvalType beta);
+    EvalType null_window_search(uint8_t depth, EvalType beta);
 
-    EvalType pv_search(Board &board, uint8_t depth, EvalType alpha, EvalType beta);
+    EvalType pv_search(uint8_t depth, EvalType alpha, EvalType beta);
 
-    bool tt_probe(Board &board, Move &move, EvalType &alpha, EvalType &beta, int depth);
+    bool tt_probe(Move &move, EvalType &alpha, EvalType &beta, int depth);
+
+    void reset_nodes();
+
+    [[nodiscard]] uint64_t get_nodes() const;
 };

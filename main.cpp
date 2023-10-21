@@ -11,7 +11,7 @@ MoveGenerator move_gen;
 
 int most_captures = 0;
 
-constexpr uint32_t num_bits = 27;
+constexpr uint32_t num_bits = 20;
 
 std::vector<Move> pv(128);
 int pv_index = 0;
@@ -44,29 +44,22 @@ uint64_t perft(Board& board, int depth) {
     return result;
 }
 
-void pv_search_test(int depth_limit) {
-    Board board(Position::Full);
-    board.print();
-    TranspositionTable tt(num_bits);
-    Search search(tt);
-    for (int depth = 1; depth <= depth_limit; depth++) {
-        Timer timer;
-        int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
-        std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
-        tt.print_pv(board, depth);
-        tt.print_size();
-    }
+void print_info(int depth, int eval, uint64_t nodes, uint64_t micros) {
+    auto millis = micros / 1000;
+    auto knps = nodes * 1000 / (micros + 1);
+    std::cout << "info depth\t" << depth << "\tscore\t" << eval << "\tnodes\t" << nodes << "\tknps\t" << knps << "\ttime\t" << millis << "\tpv ";
 }
 
 void search_test(int depth_limit) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
-    Search search(tt);
+    Search search(board, tt);
     for (int depth = 1; depth <= depth_limit; depth++) {
+        search.reset_nodes();
         Timer timer;
-        int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
-        std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
+        int eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
+        print_info(depth, eval, search.get_nodes(), timer.elapsed());
         tt.print_pv(board, depth);
         tt.print_size();
     }
@@ -84,12 +77,12 @@ void game(int depth_limit) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
-    Search search(tt);
+    Search search(board, tt);
     for (int i = 0; i < 300; i++) {
         for (int depth = 1; depth <= depth_limit; depth++) {
             Timer timer;
-            int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
-            std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
+            int eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
+            print_info(depth, eval, search.get_nodes(), timer.elapsed());
             tt.print_pv(board, depth);
             tt.print_size();
         }
@@ -106,7 +99,7 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
-    Search search(tt);
+    Search search(board, tt);
 
     auto loop_condition = [&](int depth, uint64_t time) {
         if (board.get_to_move() == Dwarf) {
@@ -121,8 +114,8 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
         int depth = 1;
         for (; loop_condition(depth, timer.elapsed()); depth++) {
             timer.reset();
-            int eval = search.pv_search(board, depth, MIN_EVAL, MAX_EVAL);
-            std::cout << "Depth " << depth << ": " << eval << " in milliseconds: " << timer.elapsed() / 1000 << " pv: ";
+            int eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
+            print_info(depth, eval, search.get_nodes(), timer.elapsed());
             tt.print_pv(board, depth);
             tt.print_size();
         }

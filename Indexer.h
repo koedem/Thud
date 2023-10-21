@@ -36,8 +36,8 @@ class Indexer {
 
 public:
     struct Index {
-        [[no_unique_address]] boost::multiprecision::uint128_t piece_locations; // TODO piece_locations;
-        uint32_t piece_order; // TODO piece_order;
+        [[no_unique_address]] boost::multiprecision::uint128_t piece_locations;
+        uint32_t piece_order;
         uint8_t material;
 
         bool operator==(const Index& other) const
