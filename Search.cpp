@@ -148,6 +148,19 @@ EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
         }
     }
 
+    if (RAZORING && depth == 1) {
+        EvalType eval;
+        if (board.get_to_move() == Dwarf) {
+            eval = board.get_eval();
+        } else {
+            eval = -board.get_eval();
+        }
+        if (eval >= beta) { // claim that making a move does not make things worse
+            nodes++;
+            return eval;
+        }
+    }
+
     Move tt_move = NO_MOVE;
     EvalType alpha = beta - 1;
     EvalType eval = MIN_EVAL;

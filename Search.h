@@ -7,6 +7,7 @@
 #include "TranspositionTable.h"
 
 static constexpr bool USE_TT = true;
+static constexpr bool RAZORING = true;
 
 class Search {
 
