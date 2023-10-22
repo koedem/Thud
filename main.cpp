@@ -9,8 +9,6 @@
 
 MoveGenerator move_gen;
 
-int most_captures = 0;
-
 constexpr uint32_t num_bits = 27;
 constexpr uint32_t game_length = 200;
 constexpr uint32_t num_threads = 16;
@@ -33,28 +31,6 @@ void search_test(int depth_limit) {
         print_info(depth, eval, search.get_nodes(), timer.elapsed());
         tt.print_pv(board, depth);
         tt.print_size();
-    }
-}
-
-void game(int depth_limit) {
-    Board board(Position::Full);
-    board.print();
-    TranspositionTable tt(num_bits);
-    for (int i = 0; i < game_length; i++) {
-        Search search(board, tt);
-        for (int depth = 1; depth <= depth_limit; depth++) {
-            Timer timer;
-            int eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
-            print_info(depth, eval, search.get_nodes(), timer.elapsed());
-            tt.print_pv(board, depth);
-            tt.print_size();
-        }
-        auto move = tt.at(board.get_index(), depth_limit).move;
-        board.make_move(move);
-        std::cout << std::endl << "New position" << std::endl << std::endl;
-        board.print(move);
-        std::cout << std::endl << std::endl;
-        tt.clear();
     }
 }
 
@@ -89,6 +65,10 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
         std::cout << std::endl << std::endl;
         tt.clear();
     }
+}
+
+void game(int depth_limit) {
+    game(depth_limit, depth_limit, 0, 0);
 }
 
 void parallel_perft() {
