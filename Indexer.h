@@ -32,7 +32,7 @@ class Indexer {
     template<class Value>
     Value index_from_piece_positions_without_piece_count(std::vector<int>& pieces, int n_choose = 164);
 
-    void small_smallest_encoding_order(Board& board, std::vector<int>& piece_locations, bool smallest[8]);
+    void smallest_encoding_order(Board& board, std::vector<int>& piece_locations, bool smallest[8]);
 
 public:
     struct Index {
@@ -52,7 +52,7 @@ public:
         symmetry_translations();
     };
 
-    Index small_index(Board& board);
+    Index index(Board& board);
 
-    Index symmetric_small_index(Board& board);
+    Index symmetric_index(Board& board);
 };

@@ -32,14 +32,14 @@ void Perft::store_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth, uint64_t 
 
 template<>
 uint64_t Perft::access_tt<Perft::SIMPLE_HASHING>(Board& board, int depth) {
-    auto index = indexer.small_index(board);
+    auto index = board.get_index();
     uint64_t value = tt.at(index, depth);
     return value;
 }
 
 template<>
 void Perft::store_tt<Perft::SIMPLE_HASHING>(Board& board, int depth, uint64_t value) {
-    auto index = indexer.small_index(board);
+    auto index = board.get_index();
     tt.emplace(index, depth, value);
 }
 

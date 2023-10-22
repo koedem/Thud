@@ -139,16 +139,12 @@ void Board::print(Move move) const {
     }
 }
 
-int Board::number_of_captures() const {
-    return 40 - dwarfs_remaining - trolls_remaining;
-}
-
 EvalType Board::get_material() const {
     return dwarfs_remaining - trolls_remaining * 4;
 }
 
 Indexer::Index Board::get_index() {
-    return indexer.symmetric_small_index(*this);
+    return indexer.symmetric_index(*this);
 }
 
 void Board::remove_dwarf(Square square) {

@@ -18,7 +18,7 @@ Value Indexer::index_from_piece_positions_without_piece_count(std::vector<int> &
     return index;
 }
 
-Indexer::Index Indexer::small_index(Board& board) {
+Indexer::Index Indexer::index(Board& board) {
     std::vector<int> piece_locations;
     std::vector<int> troll_locations_within_piece_locations;
     for (int id = 0; id < 164; id++) {
@@ -41,7 +41,7 @@ Indexer::Index Indexer::small_index(Board& board) {
     return {piece_index, troll_index, material};
 }
 
-void Indexer::small_smallest_encoding_order(Board& board, std::vector<int>& piece_locations, bool smallest[8]) {
+void Indexer::smallest_encoding_order(Board& board, std::vector<int>& piece_locations, bool smallest[8]) {
     int most_recent_symmetry = this->most_recent_symmetry;
     for (int symmetry = 0; symmetry < 8; symmetry++) {
         if (!smallest[symmetry] || symmetry == most_recent_symmetry) {
@@ -74,7 +74,7 @@ void Indexer::small_smallest_encoding_order(Board& board, std::vector<int>& piec
     }
 }
 
-Indexer::Index Indexer::symmetric_small_index(Board& board) {
+Indexer::Index Indexer::symmetric_index(Board& board) {
     Index result;
 
     int most_recent_symmetry = this->most_recent_symmetry;
@@ -87,7 +87,7 @@ Indexer::Index Indexer::symmetric_small_index(Board& board) {
     }
 
     bool smallest[8] = { true, true, true, true, true, true, true, true };
-    small_smallest_encoding_order(board, piece_locations, smallest);
+    smallest_encoding_order(board, piece_locations, smallest);
 
     result.piece_locations = index_from_piece_positions_without_piece_count<boost::multiprecision::uint128_t> (piece_locations);
 

@@ -15,7 +15,6 @@ public:
 
 private:
     MoveGenerator move_gen;
-    Indexer indexer;
     Perft_TT& tt;
     uint64_t hash_savings = 0, sub_hash_savings = 0;
 

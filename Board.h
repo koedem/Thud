@@ -27,8 +27,6 @@ public:
 
     void print(Move move = NO_MOVE) const;
 
-    [[nodiscard]] int number_of_captures() const;
-
     [[nodiscard]] EvalType get_material() const;
 
     [[nodiscard]] EvalType get_eval() const;
