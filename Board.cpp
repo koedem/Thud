@@ -13,7 +13,6 @@ void Board::fill_position<Position::Full>() {
 
     dwarfs_remaining = 32;
     trolls_remaining = 8;
-    num_captured = 0;
 }
 
 template<>
@@ -23,7 +22,6 @@ void Board::fill_position<Position::Endgame>() {
 
     dwarfs_remaining = 1;
     trolls_remaining = 8;
-    num_captured = 31;
 }
 
 Board::Board(Position type) : board(255, Piece::NONE), to_move(Dwarf) {
@@ -53,27 +51,24 @@ void Board::change_to_move() {
 }
 
 void Board::make_move(Move move) {
-    if (move.to_move == Dwarf) {
-        remove_dwarf(move.from);
-        add_dwarf(move.to);
-    } else {
-        board[move.to] = board[move.from];
-        board[move.from] = Piece::NONE;
-    }
-    num_captured += std::popcount(move.captures);
-
-
     if (move.captures != NO_CAPTURES) {
         if (move.to_move == Dwarf) {
-            trolls_remaining--; // Dwarfs capture a troll
-        } else {
+            remove_troll(move.to); // Dwarfs capture a troll
+        } else { // Troll captures all surrounding dwarves
             for (int dir = 0; dir < directions.size(); dir++) {
                 if ((move.captures & (1 << dir)) != 0) {
                     remove_dwarf(move.to + directions[dir]);
                 }
             }
-            dwarfs_remaining -= std::popcount(move.captures); // Bitboard of captures, popcount many dwarves captured
         }
+    }
+
+    if (move.to_move == Dwarf) {
+        remove_dwarf(move.from);
+        add_dwarf(move.to);
+    } else {
+        remove_troll(move.from);
+        add_troll(move.to);
     }
     change_to_move();
 }
@@ -84,22 +79,19 @@ void Board::unmake_move(Move move) {
         remove_dwarf(move.to);
         add_dwarf(move.from);
     } else {
-        board[move.from] = board[move.to];
-        board[move.to] = Piece::NONE;
+        remove_troll(move.to);
+        add_troll(move.from);
     }
-    num_captured -= std::popcount(move.captures);
 
     if (move.captures != NO_CAPTURES) {
         if (move.to_move == Dwarf) { // Dwarfs uncapture a troll
-            board[move.to] = Piece::TROLL;
-            trolls_remaining++;
-        } else {
+            add_troll(move.to);
+        } else { // Troll uncaptures all surrounding dwarves
             for (int dir = 0; dir < directions.size(); dir++) {
                 if ((move.captures & (1 << dir)) != 0) {
                     add_dwarf(move.to + directions[dir]);
                 }
             }
-            dwarfs_remaining += std::popcount(move.captures); // Bitboard of captures, popcount many dwarves uncaptured
         }
     }
 }
@@ -112,38 +104,12 @@ Colour Board::get_to_move() const {
     return to_move;
 }
 
-void Board::print() const {
-    for (Square i = 0; i < 16; i++) {
-        for (Square j = 0; j < 16; j++) {
-            Square square = i * 16 + j;
-            Piece piece = board[square];
-            if (piece == Piece::NONE) {
-                std::cout << "0";
-            } else if (piece == Piece::DWARF) {
-                std::cout << "\033[32m";
-                std::cout << "Z";
-                std::cout << "\033[0m";
-            } else if (piece == Piece::TROLL) {
-                std::cout << "\033[36m";
-                std::cout << "T";
-                std::cout << "\033[0m";
-            } else if (piece == Piece::STONE) {
-                std::cout << "X";
-            } else if (piece == Piece::OUTSIDE) {
-                std::cout << "-";
-            }
-            std::cout << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-
 void Board::print(Move move) const {
     for (Square i = 0; i < 16; i++) {
         for (Square j = 0; j < 16; j++) {
             Square square = i * 16 + j;
 
-            if (square == move.from || square == move.to) {
+            if (move != NO_MOVE && (square == move.from || square == move.to)) {
                 std::cout << "\033[1;7;33m";
             }
 
@@ -164,7 +130,7 @@ void Board::print(Move move) const {
                 std::cout << "-";
             }
 
-            if (square == move.from || square == move.to) {
+            if (move != NO_MOVE && (square == move.from || square == move.to)) {
                 std::cout << "\033[0m";
             }
             std::cout << " ";
@@ -174,7 +140,7 @@ void Board::print(Move move) const {
 }
 
 int Board::number_of_captures() const {
-    return num_captured;
+    return 40 - dwarfs_remaining - trolls_remaining;
 }
 
 EvalType Board::get_material() const {
@@ -193,6 +159,7 @@ void Board::remove_dwarf(Square square) {
             dwarf_connections--;
         }
     }
+    dwarfs_remaining--;
 }
 
 void Board::add_dwarf(Square square) {
@@ -203,6 +170,17 @@ void Board::add_dwarf(Square square) {
             dwarf_connections++;
         }
     }
+    dwarfs_remaining++;
+}
+
+void Board::remove_troll(Square square) {
+    board[square] = Piece::NONE;
+    trolls_remaining--;
+}
+
+void Board::add_troll(Square square) {
+    board[square] = Piece::TROLL;
+    trolls_remaining++;
 }
 
 EvalType Board::get_eval() const {

@@ -7,14 +7,7 @@ class Board {
 
     std::vector<Piece> board;
     Colour to_move;
-
-    /**
-     * Number of pieces missing compared to the starting position
-     */
-    int num_captured;
-
     int dwarfs_remaining, trolls_remaining;
-
     int dwarf_connections = 0;
 
     Indexer indexer;
@@ -32,9 +25,7 @@ public:
 
     [[nodiscard]] Colour get_to_move() const;
 
-    void print() const;
-
-    void print(Move move) const;
+    void print(Move move = NO_MOVE) const;
 
     [[nodiscard]] int number_of_captures() const;
 
@@ -51,4 +42,8 @@ private:
     void remove_dwarf(Square square);
 
     void add_dwarf(Square square);
+
+    void remove_troll(Square square);
+
+    void add_troll(Square square);
 };
