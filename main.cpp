@@ -11,7 +11,7 @@ MoveGenerator move_gen;
 
 int most_captures = 0;
 
-constexpr uint32_t num_bits = 20;
+constexpr uint32_t num_bits = 27;
 
 std::vector<Move> pv(128);
 int pv_index = 0;
@@ -77,8 +77,8 @@ void game(int depth_limit) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
-    Search search(board, tt);
     for (int i = 0; i < 300; i++) {
+        Search search(board, tt);
         for (int depth = 1; depth <= depth_limit; depth++) {
             Timer timer;
             int eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
@@ -99,7 +99,6 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
-    Search search(board, tt);
 
     auto loop_condition = [&](int depth, uint64_t time) {
         if (board.get_to_move() == Dwarf) {
@@ -110,6 +109,7 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
     };
 
     for (int i = 0; i < 300; i++) {
+        Search search(board, tt);
         Timer timer;
         int depth = 1;
         for (; loop_condition(depth, timer.elapsed()); depth++) {
@@ -138,7 +138,9 @@ int main() {
     std::vector<Move> moves;
     move_gen.generate_moves(moves, board);
 
-    //game(7, 4, 20000000, 0);
+    //search_test(8);
+
+    game(8, 4, 20000000, 0);
 
     //Perft_TT tt;
     //Perft perft(tt);
@@ -168,7 +170,6 @@ int main() {
         board.unmake_move(move);
     }*/
 
-    search_test(7);
 
     //Board board(Position::Endgame);
     //perft_test(board, 6);
