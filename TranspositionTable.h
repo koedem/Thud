@@ -102,7 +102,27 @@ public:
             }
         }
         std::cout << "Table elements: " << num_elements << ", exact entries: " << exact_entries << ", missed writes: "
-            << missed_writes << " bucket count " << table.size() << ", bucket capacity: " << table.capacity() << std::endl;
+            << missed_writes << " improvements " << improvements << " bucket count " << table.size() << ", bucket capacity: " << table.capacity() << std::endl;
+    }
+
+    void merge(Entry& stored, const TT_Info& searched) {
+        improvements++;
+        assert(stored.value.depth == searched.depth);
+        if (stored.value.type == EXACT) { // this is probably impossible
+            return; // keep the old entry
+        } else if (searched.type == EXACT) {
+            stored.value = searched; // replace old value with exact value
+            return;
+        }
+
+        if (stored.value.type != searched.type) { // not exact, so one upper and one lower bound, TODO if abdada, handle evaluating score
+            if (stored.value.eval == searched.eval) {
+                stored.value.type = EXACT; // we have a lower and an upper bound, so an exact score
+            }
+            return;
+        }
+
+        stored.value = searched; // else we use the most recent result
     }
 
     void emplace(Index index, TT_Info value) { // TODO check if entry exists, possibly merge
@@ -110,6 +130,13 @@ public:
         bool swapped = false;
 
         std::lock_guard<Spin_Lock> guard(entries[0].lock);
+        for (auto& entry : entries) {
+            if (entry.index == index) {
+                merge(entry, value);
+                return;
+            }
+        }
+
         for (int i = 0; i < 4; i++) {
             auto & entry = entries[i];
             if (entry.value < value) { // last slot is always replace
@@ -169,6 +196,7 @@ public:
 
     void clear() {
         missed_writes = 0;
+        improvements = 0;
         table.clear();
         table.resize(size);
     }
@@ -177,5 +205,5 @@ private:
     const uint32_t size;
     std::vector<Bucket> table;
 
-    uint64_t missed_writes = 0;
+    uint64_t missed_writes = 0, improvements = 0;
 };
