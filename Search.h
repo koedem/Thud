@@ -4,7 +4,8 @@
 
 #include "Board.h"
 #include "MoveGenerator.h"
-#include "TranspositionTable.h"
+
+class TranspositionTable;
 
 static constexpr bool USE_TT = true;
 static constexpr bool RAZORING = true;
@@ -18,6 +19,8 @@ private:
     TranspositionTable& tt;
 
 public:
+    static int new_depth(int depth, Move move);
+
     EvalType nega_minimax(uint8_t depth);
 
     Search(Board board, TranspositionTable& tt) : board(std::move(board)), tt(tt) {};

@@ -6,6 +6,7 @@
 #include <fstream>
 #include "boost/multiprecision/cpp_int.hpp"
 #include "Indexer.h"
+#include "Search.h"
 
 enum Bound_Type : uint8_t {
     UPPER_BOUND, LOWER_BOUND, EXACT, EVALUATING
@@ -104,7 +105,7 @@ public:
             << missed_writes << " bucket count " << table.size() << ", bucket capacity: " << table.capacity() << std::endl;
     }
 
-    void emplace(Index index, TT_Info value) {
+    void emplace(Index index, TT_Info value) { // TODO check if entry exists, possibly merge
         auto & entries = table[pos(index, value.depth)].entries;
         bool swapped = false;
 
@@ -150,13 +151,14 @@ public:
 
     void print_pv(Board board, int depth) {
         auto index = board.get_index();
-        auto info = at(index, depth--);
+        auto info = at(index, depth);
         while (info.eval != NO_EVAL) {
             info.move.print();
             std::cout << " ";
             board.make_move(info.move);
             index = board.get_index();
-            info = at(index, depth--);
+            depth = Search::new_depth(depth, info.move);
+            info = at(index, depth);
         }
         std::cout << std::endl;
     }

@@ -4,9 +4,22 @@
 
 #include <bit>
 #include "Search.h"
-
+#include "TranspositionTable.h"
 #include "MoveGenerator.h"
 
+constexpr bool use_extensions = false;
+
+int Search::new_depth(int depth, Move move) {
+    if (use_extensions) {
+        if (move.captures == 0) {
+            return depth - 1;
+        } else {
+            return depth;
+        }
+    } else {
+        return depth - 1;
+    }
+}
 
 constexpr int find(const std::vector<Move>& moves, Move move) {
     for (int i = 0; i < moves.size(); i++) {
@@ -181,8 +194,7 @@ EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
 
     for (auto& move : moves) {
         board.make_move(move);
-
-        EvalType inner_eval = -null_window_search(depth - 1, -beta + 1);
+        EvalType inner_eval = -null_window_search(new_depth(depth, move), -beta + 1);
         board.unmake_move(move);
         if (inner_eval > eval) {
             eval = inner_eval;
@@ -230,10 +242,11 @@ EvalType Search::pv_search(uint8_t depth, EvalType alpha, EvalType beta) {
     bool search_full_window = true;
     for (auto& move : moves) {
         board.make_move(move);
+        int inner_depth = new_depth(depth, move);
 
         EvalType inner_eval;
-        if (search_full_window || (inner_eval = -null_window_search(depth - 1, -alpha)) > alpha){
-            inner_eval = -pv_search(depth - 1, -beta, -alpha);
+        if (search_full_window || (inner_eval = -null_window_search(inner_depth, -alpha)) > alpha){
+            inner_eval = -pv_search(inner_depth, -beta, -alpha);
             search_full_window = false;
         }
         board.unmake_move(move);

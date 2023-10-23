@@ -6,6 +6,7 @@
 #include "Search.h"
 #include "Perft.h"
 #include "Timer.h"
+#include "TranspositionTable.h"
 
 MoveGenerator move_gen;
 
