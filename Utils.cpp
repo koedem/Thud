@@ -33,16 +33,28 @@ bool square_on_board(Square square) {
 }
 
 void print_colour(Colour colour) {
+    std::cout << to_string(colour);
+}
+
+std::string to_string(Square square) {
+    int row = square / 16, file = square % 16;
+    std::string result;
+    result += char('a' + file);
+    result += std::to_string(row + 1); // +1 to avoid the row being zero indexed
+
+    return result;
+}
+
+std::string to_string(Colour colour) {
     if (colour == Dwarf) {
-        std::cout << "Z";
+        return "Z";
     } else {
-        std::cout << "T";
+        return "T";
     }
 }
 
 void print_square(Square square) {
-    int row = square / 16, file = square % 16;
-    std::cout << char ('a' + file) << row;
+    std::cout << to_string(square);
 }
 
 Colour flip_colour(Colour c) {
@@ -66,4 +78,8 @@ boost::multiprecision::uint128_t n_choose_k(std::size_t n, std::size_t k) {
         result /= i;
     }
     return static_cast<boost::multiprecision::uint128_t>(result);
+}
+
+std::string to_string(Move move) {
+    return to_string(move.to_move) + to_string(move.from) + "-" + to_string(move.to);
 }

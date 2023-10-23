@@ -16,9 +16,13 @@
 
 Colour flip_colour(Colour c);
 
+std::string to_string(Colour colour);
+
 void print_colour(Colour colour);
 
 using Square = uint8_t;
+
+std::string to_string(Square square);
 
 void print_square(Square square);
 
@@ -84,6 +88,8 @@ struct Move {
         return to_move == other.to_move && from == other.from && to == other.to && captures == other.captures;
     }
 };
+
+std::string to_string(Move move);
 
 static constexpr Move NO_MOVE = { Dwarf, 0, 0, 0 };
 
