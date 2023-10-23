@@ -9,7 +9,7 @@
 
 MoveGenerator move_gen;
 
-constexpr uint32_t num_bits = 27;
+constexpr uint32_t num_bits = 24;
 constexpr uint32_t game_length = 200;
 constexpr uint32_t num_threads = 16;
 
@@ -100,13 +100,75 @@ void parallel_perft() {
     }
 }
 
+Move parse_move(const std::string& move_str, Board& board) {
+    std::vector<Move> moves;
+    move_gen.generate_moves(moves, board);
+    for (Move move : moves) {
+        if (to_string(move) == move_str) {
+            return move;
+        }
+    }
+    return NO_MOVE;
+}
+
+Move get_human_move(Board& board) {
+    Move human = NO_MOVE;
+    while (human == NO_MOVE) {
+        std::string human_move;
+        std::cin >> human_move;
+        human = parse_move(human_move, board);
+    }
+    return human;
+}
+
+void human_vs_bot(int time_limit, Colour human_colour) {
+    Board board(Position::Full);
+    board.print();
+    TranspositionTable tt(num_bits);
+
+    if (human_colour == Dwarf) {
+        Move human = get_human_move(board);
+        board.make_move(human);
+        std::cout << std::endl << "New position" << std::endl << std::endl;
+        board.print(human);
+        std::cout << std::endl << std::endl;
+    }
+
+    for (int i = 0; i < game_length; i++) {
+        Search search(board, tt);
+        Timer timer;
+        int depth = 1;
+        for (; depth <= 4 || (timer.elapsed() < time_limit && depth < 50); depth++) {
+            timer.reset();
+            int eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
+            print_info(depth, eval, search.get_nodes(), timer.elapsed());
+            tt.print_pv(board, depth);
+            tt.print_size();
+        }
+        auto move = tt.at(board.get_index(), depth - 1).move;
+        board.make_move(move);
+        std::cout << std::endl << "New position" << std::endl << std::endl;
+        board.print(move);
+        std::cout << std::endl << std::endl;
+        tt.clear();
+
+        Move human = get_human_move(board);
+        board.make_move(human);
+        std::cout << std::endl << "New position" << std::endl << std::endl;
+        board.print(human);
+        std::cout << std::endl << std::endl;
+    }
+}
+
 int main() {
     setup_valid_squares();
     //Tablebase_test test;
     //test.test_indexing(4);
     //search_test(8);
     // parallel_perft();
+    game(4);
+    human_vs_bot(1000000, Troll);
 
-    game(8, 4, 20000000, 0);
+    //game(8, 5, 20000000, 50000);
     return 0;
 }
