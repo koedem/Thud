@@ -29,9 +29,11 @@ public:
 
     void print(Move move = NO_MOVE) const;
 
-    [[nodiscard]] EvalType get_material() const;
+    [[nodiscard]] int get_dwarf_count() const;
 
-    [[nodiscard]] EvalType get_eval() const;
+    [[nodiscard]] int get_troll_count() const;
+
+    [[nodiscard]] EvalType get_eval(EvalParameters params) const;
 
     [[nodiscard]] Indexer::Index get_index();
 

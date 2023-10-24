@@ -21,4 +21,5 @@ add_executable(Thud main.cpp Board.h
         Timer.h
         TranspositionTable.h
         Evaluation.cpp
-        Evaluation.h)
+        Evaluation.h
+        Parameters.h)

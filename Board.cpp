@@ -139,8 +139,12 @@ void Board::print(Move move) const {
     }
 }
 
-EvalType Board::get_material() const {
-    return dwarfs_remaining - trolls_remaining * 4;
+int Board::get_dwarf_count() const {
+    return dwarfs_remaining;
+}
+
+int Board::get_troll_count() const {
+    return trolls_remaining;
 }
 
 Indexer::Index Board::get_index() {
@@ -183,6 +187,6 @@ void Board::add_troll(Square square) {
     trolls_remaining++;
 }
 
-EvalType Board::get_eval() const {
-    return evaluation.eval(*this);
+EvalType Board::get_eval(EvalParameters params) const {
+    return evaluation.eval(*this, params);
 }
