@@ -2,6 +2,7 @@
 
 #include "Utils.h"
 #include "Indexer.h"
+#include "Evaluation.h"
 
 class Board {
 
@@ -11,6 +12,7 @@ class Board {
     int dwarf_connections = 0;
 
     Indexer indexer;
+    Evaluation evaluation;
 
 public:
     explicit Board(Position position);
@@ -31,7 +33,9 @@ public:
 
     [[nodiscard]] EvalType get_eval() const;
 
-    Indexer::Index get_index();
+    [[nodiscard]] Indexer::Index get_index();
+
+    [[nodiscard]] int get_dwarf_connections() const;
 
 private:
     template<Position TYPE>

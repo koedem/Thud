@@ -147,6 +147,10 @@ Indexer::Index Board::get_index() {
     return indexer.symmetric_index(*this);
 }
 
+int Board::get_dwarf_connections() const {
+    return dwarf_connections;
+}
+
 void Board::remove_dwarf(Square square) {
     board[square] = Piece::NONE;
 
@@ -180,5 +184,5 @@ void Board::add_troll(Square square) {
 }
 
 EvalType Board::get_eval() const {
-    return get_material() * 2 + dwarf_connections;
+    return evaluation.eval(*this);
 }
