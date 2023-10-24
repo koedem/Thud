@@ -7,8 +7,6 @@
 #include "TranspositionTable.h"
 #include "MoveGenerator.h"
 
-constexpr bool use_extensions = false;
-constexpr bool shuffled_pv_search = true;
 
 int Search::new_depth(int depth, Move move) {
     if (use_extensions) {

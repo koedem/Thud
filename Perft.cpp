@@ -2,8 +2,6 @@
 #include "Perft.h"
 #include "Timer.h"
 
-constexpr int tt_depth = 2;
-
 template<>
 uint64_t Perft::access_tt<Perft::NO_HASHING>(Board &board, int depth) {
     return 0;
@@ -14,7 +12,7 @@ void Perft::store_tt<Perft::NO_HASHING>(Board &board, int depth, uint64_t value)
 
 template<>
 uint64_t Perft::access_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth) {
-    if (depth >= tt_depth) {
+    if (depth >= perft_tt_depth) {
         auto index = board.get_index();
         uint64_t value = tt.at(index, depth); // TODO unify this, use the struct everywhere?
         return value;
@@ -24,7 +22,7 @@ uint64_t Perft::access_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth) {
 
 template<>
 void Perft::store_tt<Perft::SYMMETRY_HASHING>(Board &board, int depth, uint64_t value) {
-    if (depth >= tt_depth) {
+    if (depth >= perft_tt_depth) {
         auto index = board.get_index();
         tt.emplace(index, depth, value);
     }

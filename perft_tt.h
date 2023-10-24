@@ -13,8 +13,6 @@ class Perft_TT {
 
 private:
     static constexpr uint32_t entries_per_bucket = 4;
-    static constexpr bool store_to_file = true;
-    const std::string storage_path = "/media/kolja/Volume/StartPositionD7.tt";
 
     struct Entry {
         [[no_unique_address]] Index index;
@@ -28,7 +26,7 @@ private:
     };
 
     void load(const std::string& path) {
-        if (store_to_file) {
+        if (perft_store_to_file) {
             std::ifstream file(path, std::ios::in | std::ios::binary);
             if (!file.is_open()) {
                 // Handle file open error
@@ -45,7 +43,7 @@ private:
 
 public:
     void store() {
-        if (store_to_file) {
+        if (perft_store_to_file) {
             std::ofstream file(storage_path, std::ios::out | std::ios::binary);
             if (!file.is_open()) {
                 return;
@@ -55,7 +53,7 @@ public:
         }
     }
 
-    Perft_TT() : table(size) {
+    Perft_TT() : table(perft_tt_size) {
         load(storage_path);
     }
 
@@ -118,11 +116,10 @@ public:
     }
 
     static inline uint64_t pos(const Index& index, uint16_t depth) {
-        return static_cast<uint64_t>((index.piece_locations + index.piece_order + depth) % size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
+        return static_cast<uint64_t>((index.piece_locations + index.piece_order + depth) % perft_tt_size); // this is a compile-time constant and gets compiled to either a bit and or an efficient version of this
     }
 
 private:
-    static constexpr uint32_t size = 1 << 27;
     std::vector<Bucket> table;
 
     uint64_t missed_writes = 0;

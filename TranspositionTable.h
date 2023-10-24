@@ -40,7 +40,6 @@ class TranspositionTable {
 
 private:
     static constexpr uint32_t entries_per_bucket = 4;
-    static constexpr bool store_to_file = true;
     const std::string storage_path = "/media/kolja/Volume/Test.stt";
 
     struct Entry {
@@ -58,7 +57,7 @@ private:
     };
 
     void load(const std::string& path) {
-        if (store_to_file) {
+        if (search_store_to_file) {
             std::ifstream file(path, std::ios::in | std::ios::binary);
             if (!file.is_open()) {
                 // Handle file open error
@@ -75,7 +74,7 @@ private:
 
 public:
     void store() {
-        if (store_to_file) {
+        if (search_store_to_file) {
             std::ofstream file(storage_path, std::ios::out | std::ios::binary);
             if (!file.is_open()) {
                 return;
