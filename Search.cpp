@@ -8,6 +8,7 @@
 #include "MoveGenerator.h"
 
 constexpr bool use_extensions = false;
+constexpr bool shuffled_pv_search = true;
 
 int Search::new_depth(int depth, Move move) {
     if (use_extensions) {
@@ -232,7 +233,11 @@ EvalType Search::pv_search(uint8_t depth, EvalType alpha, EvalType beta) {
     EvalType eval = MIN_EVAL;
     Bound_Type type = UPPER_BOUND;
     std::vector<Move> moves;
-    move_gen.generate_moves(moves, board);
+    if (shuffled_pv_search) {
+        move_gen.generate_shuffled_moves(moves, board);
+    } else {
+        move_gen.generate_moves(moves, board);
+    }
 
     int tt_move_index = find(moves, tt_move);
     if (tt_move_index > 0) {
