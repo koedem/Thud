@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Parameters.h"
+#include "Utils.h"
 
 class Board;
 
 class Evaluation {
 public:
 
-    [[nodiscard]] int eval(const Board &board, EvalParameters params) const;
+    [[nodiscard]] EvalType eval(const Board &board, const EvalParameters& params) const;
 
 };

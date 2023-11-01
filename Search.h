@@ -14,13 +14,15 @@ private:
     uint64_t nodes = 0;
     MoveGenerator move_gen;
     TranspositionTable& tt;
+    const EvalParameters eval_params;
 
 public:
     static int new_depth(int depth, Move move);
 
     EvalType nega_minimax(uint8_t depth);
 
-    Search(Board board, TranspositionTable& tt) : board(std::move(board)), tt(tt) {};
+    Search(Board board, TranspositionTable& tt, EvalParameters eval_params) : board(std::move(board)), tt(tt),
+                                                                              eval_params(eval_params) {};
 
     EvalType nega_max(uint8_t depth, EvalType alpha, EvalType beta);
 

@@ -187,6 +187,6 @@ void Board::add_troll(Square square) {
     trolls_remaining++;
 }
 
-EvalType Board::get_eval(EvalParameters params) const {
+EvalType Board::get_eval(const EvalParameters& params) const {
     return evaluation.eval(*this, params);
 }

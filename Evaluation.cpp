@@ -1,7 +1,7 @@
 #include "Evaluation.h"
 #include "Board.h"
 
-int Evaluation::eval(const Board& board, EvalParameters params) const {
-    int material = board.get_dwarf_count() - board.get_troll_count() * 4;
-    return material * 2 + board.get_dwarf_connections();
+EvalType Evaluation::eval(const Board& board, const EvalParameters& params) const {
+    int material = board.get_dwarf_count() * params.dwarf_factor - board.get_troll_count() * params.troll_factor;
+    return material + board.get_dwarf_connections() * params.dwarf_connection_factor;
 }

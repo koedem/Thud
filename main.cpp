@@ -10,10 +10,6 @@
 
 MoveGenerator move_gen;
 
-constexpr uint32_t num_bits = 24;
-constexpr uint32_t game_length = 200;
-constexpr uint32_t num_threads = 16;
-
 void print_info(int depth, int eval, uint64_t nodes, uint64_t micros) {
     auto millis = micros / 1000;
     auto knps = nodes * 1000 / (micros + 1);
@@ -24,7 +20,7 @@ void search_test(int depth_limit) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
-    Search search(board, tt);
+    Search search(board, tt, default_eval);
     for (int depth = 1; depth <= depth_limit; depth++) {
         search.reset_nodes();
         Timer timer;
@@ -33,6 +29,37 @@ void search_test(int depth_limit) {
         tt.print_pv(board, depth);
         tt.print_size();
     }
+}
+
+int quiet_selfplay(int dwarf_depth, int troll_depth) {
+    Board board(Position::Full);
+    TranspositionTable tt(num_bits);
+    int final_eval;
+
+    auto loop_condition = [&](int depth, uint64_t time) {
+        if (board.get_to_move() == Dwarf) {
+            return depth <= dwarf_depth;
+        } else {
+            return depth <= troll_depth;
+        }
+    };
+
+    for (int i = 0; i < game_length; i++) {
+        Search search(board, tt, default_eval);
+        Timer timer;
+        int depth = 1;
+        for (; loop_condition(depth, timer.elapsed()); depth++) {
+            timer.reset();
+            final_eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
+        }
+        auto move = tt.at(board.get_index(), depth - 1).move;
+        board.make_move(move);
+        //move.print();
+        //std::cout << " " << std::flush;
+        tt.clear();
+    }
+    //board.print();
+    return board.get_dwarf_count() - board.get_troll_count() * 4;
 }
 
 void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t troll_time_micros) {
@@ -49,7 +76,7 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
     };
 
     for (int i = 0; i < game_length; i++) {
-        Search search(board, tt);
+        Search search(board, tt, default_eval);
         Timer timer;
         int depth = 1;
         for (; loop_condition(depth, timer.elapsed()); depth++) {
@@ -136,7 +163,7 @@ void human_vs_bot(int time_limit, Colour human_colour) {
     }
 
     for (int i = 0; i < game_length; i++) {
-        Search search(board, tt);
+        Search search(board, tt, default_eval);
         Timer timer;
         int depth = 1;
         for (; depth <= 4 || (timer.elapsed() < time_limit && depth < 50); depth++) {
@@ -165,10 +192,15 @@ int main() {
     setup_valid_squares();
     //Tablebase_test test;
     //test.test_indexing(4);
-    //search_test(8);
+    search_test(8);
     // parallel_perft();
-    game(4);
-    human_vs_bot(1000000, Troll);
+    int dwarf_depth = 6, troll_depth = 4;
+    std::cout << "Dwarf depth: " << dwarf_depth << ", troll depth: " << troll_depth << std::endl;
+    for (int i = 0; i < 125; i++) {
+        std::cout << quiet_selfplay(dwarf_depth, troll_depth) << std::endl;
+    }
+    //game(5);
+    //human_vs_bot(1000000, Troll);
 
     //game(8, 5, 20000000, 50000);
     return 0;

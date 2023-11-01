@@ -33,7 +33,7 @@ public:
 
     [[nodiscard]] int get_troll_count() const;
 
-    [[nodiscard]] EvalType get_eval(EvalParameters params) const;
+    [[nodiscard]] EvalType get_eval(const EvalParameters& params) const;
 
     [[nodiscard]] Indexer::Index get_index();
 

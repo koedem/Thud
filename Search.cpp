@@ -63,9 +63,9 @@ EvalType Search::nega_minimax(uint8_t depth) {
     if (depth == 0) {
         nodes++;
         if (board.get_to_move() == Dwarf) {
-            return board.get_eval({});
+            return board.get_eval(eval_params);
         } else {
-            return -board.get_eval({});
+            return -board.get_eval(eval_params);
         }
     }
 
@@ -104,9 +104,9 @@ EvalType Search::nega_max(uint8_t depth, EvalType alpha, EvalType beta) {
     if (depth == 0) {
         nodes++;
         if (board.get_to_move() == Dwarf) {
-            return board.get_eval({});
+            return board.get_eval(eval_params);
         } else {
-            return -board.get_eval({});
+            return -board.get_eval(eval_params);
         }
     }
 
@@ -154,18 +154,18 @@ EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
     if (depth == 0) {
         nodes++;
         if (board.get_to_move() == Dwarf) {
-            return board.get_eval({});
+            return board.get_eval(eval_params);
         } else {
-            return -board.get_eval({});
+            return -board.get_eval(eval_params);
         }
     }
 
     if (RAZORING && depth == 1) {
         EvalType eval;
         if (board.get_to_move() == Dwarf) {
-            eval = board.get_eval({});
+            eval = board.get_eval(eval_params);
         } else {
-            eval = -board.get_eval({});
+            eval = -board.get_eval(eval_params);
         }
         if (eval >= beta) { // claim that making a move does not make things worse
             nodes++;
@@ -216,9 +216,9 @@ EvalType Search::pv_search(uint8_t depth, EvalType alpha, EvalType beta) {
     if (depth == 0) {
         nodes++;
         if (board.get_to_move() == Dwarf) {
-            return board.get_eval({});
+            return board.get_eval(eval_params);
         } else {
-            return -board.get_eval({});
+            return -board.get_eval(eval_params);
         }
     }
 

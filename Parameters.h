@@ -7,6 +7,8 @@ struct EvalParameters {
     int dwarf_connection_factor;
 };
 
+constexpr EvalParameters default_eval{2, 8, 1};
+
 // for main
 constexpr uint32_t num_bits = 23;
 constexpr uint32_t game_length = 200;
