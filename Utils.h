@@ -62,7 +62,11 @@ enum class Position {
 
 void setup_valid_squares();
 
+void setup_center_squares();
+
 bool square_on_board(Square square);
+
+bool square_in_center(Square square);
 
 boost::multiprecision::uint128_t n_choose_k(std::size_t n, std::size_t k);
 

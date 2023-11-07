@@ -1,6 +1,18 @@
 #include "Utils.h"
 
 bool valid_squares[256];
+bool center_squares[256];
+
+void setup_center_squares() {
+    for (int square = 0; square < 256; square++) {
+        bool value = false;
+        Square row = square / 16, file = square % 16;
+        if (row >= 4 && row < 11 && file >= 4 && file < 11) {
+            value = true;
+        }
+        center_squares[square] = value;
+    }
+}
 
 void setup_valid_squares() {
     for (int square = 0; square < 256; square++) {
@@ -30,6 +42,10 @@ void setup_valid_squares() {
 
 bool square_on_board(Square square) {
     return valid_squares[square];
+}
+
+bool square_in_center(Square square) {
+    return center_squares[square];
 }
 
 void print_colour(Colour colour) {

@@ -7,6 +7,7 @@
 #include "Perft.h"
 #include "Timer.h"
 #include "TranspositionTable.h"
+#include "clop.h"
 
 MoveGenerator move_gen;
 
@@ -16,11 +17,11 @@ void print_info(int depth, int eval, uint64_t nodes, uint64_t micros) {
     std::cout << "info depth\t" << depth << "\tscore\t" << eval << "\tnodes\t" << nodes << "\tknps\t" << knps << "\ttime\t" << millis << "\tpv ";
 }
 
-void search_test(int depth_limit) {
+void search_test(int depth_limit, EvalParameters eval_params) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
-    Search search(board, tt, default_eval);
+    Search search(board, tt, eval_params);
     for (int depth = 1; depth <= depth_limit; depth++) {
         search.reset_nodes();
         Timer timer;
@@ -31,38 +32,8 @@ void search_test(int depth_limit) {
     }
 }
 
-int quiet_selfplay(int dwarf_depth, int troll_depth) {
-    Board board(Position::Full);
-    TranspositionTable tt(num_bits);
-    int final_eval;
-
-    auto loop_condition = [&](int depth, uint64_t time) {
-        if (board.get_to_move() == Dwarf) {
-            return depth <= dwarf_depth;
-        } else {
-            return depth <= troll_depth;
-        }
-    };
-
-    for (int i = 0; i < game_length; i++) {
-        Search search(board, tt, default_eval);
-        Timer timer;
-        int depth = 1;
-        for (; loop_condition(depth, timer.elapsed()); depth++) {
-            timer.reset();
-            final_eval = search.pv_search(depth, MIN_EVAL, MAX_EVAL);
-        }
-        auto move = tt.at(board.get_index(), depth - 1).move;
-        board.make_move(move);
-        //move.print();
-        //std::cout << " " << std::flush;
-        tt.clear();
-    }
-    //board.print();
-    return board.get_dwarf_count() - board.get_troll_count() * 4;
-}
-
-void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t troll_time_micros) {
+void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t troll_time_micros,
+          EvalParameters dwarf_eval, EvalParameters troll_eval) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
@@ -76,7 +47,7 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
     };
 
     for (int i = 0; i < game_length; i++) {
-        Search search(board, tt, default_eval);
+        Search search(board, tt,  board.get_to_move() == Dwarf ? dwarf_eval : troll_eval);
         Timer timer;
         int depth = 1;
         for (; loop_condition(depth, timer.elapsed()); depth++) {
@@ -95,8 +66,8 @@ void game(int dwarf_depth, int troll_depth, uint64_t dwarf_time_micros, uint64_t
     }
 }
 
-void game(int depth_limit) {
-    game(depth_limit, depth_limit, 0, 0);
+void game(int depth_limit, EvalParameters dwarf_eval, EvalParameters troll_eval) {
+    game(depth_limit, depth_limit, 0, 0, dwarf_eval, troll_eval);
 }
 
 void parallel_perft() {
@@ -149,7 +120,7 @@ Move get_human_move(Board& board) {
     return human;
 }
 
-void human_vs_bot(int time_limit, Colour human_colour) {
+void human_vs_bot(int time_limit, Colour human_colour, EvalParameters eval_params = default_dwarf_eval) {
     Board board(Position::Full);
     board.print();
     TranspositionTable tt(num_bits);
@@ -163,7 +134,7 @@ void human_vs_bot(int time_limit, Colour human_colour) {
     }
 
     for (int i = 0; i < game_length; i++) {
-        Search search(board, tt, default_eval);
+        Search search(board, tt, eval_params);
         Timer timer;
         int depth = 1;
         for (; depth <= 4 || (timer.elapsed() < time_limit && depth < 50); depth++) {
@@ -188,20 +159,48 @@ void human_vs_bot(int time_limit, Colour human_colour) {
     }
 }
 
-int main() {
+void eval_tuning(int depth, int repeats, int slices, int slice) {
+    std::cout << "Depth: " << depth << ", slice: " << slice << " / " << slices  << std::endl;
+
+    int slice_size = 48 / slices;
+    for (int troll_eval = slice_size * slice; troll_eval < slice_size * (slice + 1); troll_eval++) {
+        int troll_connection = troll_eval % 4, troll_troll_value = 16 + (troll_eval / 4);
+        for (int dwarf_eval = 0; dwarf_eval < 76; dwarf_eval++) {
+            int connection = (dwarf_eval % 4) + 1, troll_value = 9 + (dwarf_eval / 4);
+
+            int result = 0;
+            EvalParameters dwarf_side = {4, troll_value, connection}, troll_side = {4, troll_troll_value, troll_connection};
+            for (int repeat = 0; repeat < repeats; repeat++) {
+                result += quiet_selfplay(depth, depth, dwarf_side, troll_side);
+            }
+            std::cout << result / repeats << "\t" << std::flush;
+        }
+        std::cout << std::endl;
+    }
+}
+
+int main(int argc, char** argv) {
     setup_valid_squares();
+    setup_center_squares();
     //Tablebase_test test;
     //test.test_indexing(4);
-    search_test(8);
+    search_test(8, default_dwarf_eval);
     // parallel_perft();
-    int dwarf_depth = 6, troll_depth = 4;
-    std::cout << "Dwarf depth: " << dwarf_depth << ", troll depth: " << troll_depth << std::endl;
-    for (int i = 0; i < 125; i++) {
-        std::cout << quiet_selfplay(dwarf_depth, troll_depth) << std::endl;
-    }
+    //game(6, 5, 2000000, 50000, default_eval, {1, 4, 1});
     //game(5);
-    //human_vs_bot(1000000, Troll);
+    //compute_clop_mock(5, 3); /*
+    //dwarf_clop(argc, argv, 3, 1); /*
+    //clop_test(argc, argv, 3, 0);/*
+    int dwarf_depth = 4, troll_depth = 3, repeats = 1;
+    //eval_tuning(dwarf_depth, repeats, 12, 11);
+    EvalParameters new_dwarf = {50, 400, 0, 1, 20, 40, 100}, new_troll = {55, 400, 10, 1};
+    //game(4, 3, 0, 0, new_dwarf, default_troll_eval);/*
+    for (int i = 0; i < 100; i++) { // 25 minutes
+        int dwarf_result = quiet_selfplay(dwarf_depth, troll_depth, new_dwarf, default_troll_eval);
+        int troll_result = quiet_selfplay(dwarf_depth, troll_depth, default_troll_eval, new_troll);
+        std::cout << dwarf_result - troll_result << " " << dwarf_result << " " << troll_result << std::endl;
+    }
+    //human_vs_bot(1000000, Troll);*/
 
-    //game(8, 5, 20000000, 50000);
     return 0;
 }
