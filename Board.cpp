@@ -13,6 +13,7 @@ void Board::fill_position<Position::Full>() {
 
     dwarfs_remaining = 32;
     trolls_remaining = 8;
+    center_trolls = 8, center_dwarves = 0;
 }
 
 template<>
@@ -22,6 +23,7 @@ void Board::fill_position<Position::Endgame>() {
 
     dwarfs_remaining = 1;
     trolls_remaining = 8;
+    center_trolls = 8, center_dwarves = 0;
 }
 
 Board::Board(Position type) : board(255, Piece::NONE), to_move(Dwarf) {
@@ -155,8 +157,20 @@ int Board::get_dwarf_connections() const {
     return dwarf_connections;
 }
 
+int Board::get_dwarf_centers() const {
+    return center_dwarves;
+}
+
+int Board::get_troll_centers() const {
+    return center_trolls;
+}
+
 void Board::remove_dwarf(Square square) {
     board[square] = Piece::NONE;
+
+    if (square_in_center(square)) {
+        center_dwarves--;
+    }
 
     for (int dir = 0; dir < directions.size(); dir++) {
         if (board[square + directions[dir]] == Piece::DWARF) {
@@ -169,6 +183,10 @@ void Board::remove_dwarf(Square square) {
 void Board::add_dwarf(Square square) {
     board[square] = Piece::DWARF;
 
+    if (square_in_center(square)) {
+        center_dwarves++;
+    }
+
     for (int dir = 0; dir < directions.size(); dir++) {
         if (board[square + directions[dir]] == Piece::DWARF) {
             dwarf_connections++;
@@ -179,11 +197,19 @@ void Board::add_dwarf(Square square) {
 
 void Board::remove_troll(Square square) {
     board[square] = Piece::NONE;
+    if (square_in_center(square)) {
+        center_trolls--;
+    }
+
     trolls_remaining--;
 }
 
 void Board::add_troll(Square square) {
     board[square] = Piece::TROLL;
+    if (square_in_center(square)) {
+        center_trolls++;
+    }
+
     trolls_remaining++;
 }
 

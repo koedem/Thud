@@ -10,6 +10,7 @@ class Board {
     Colour to_move;
     int dwarfs_remaining, trolls_remaining;
     int dwarf_connections = 0;
+    int center_dwarves, center_trolls;
 
     Indexer indexer;
     Evaluation evaluation;
@@ -38,6 +39,10 @@ public:
     [[nodiscard]] Indexer::Index get_index();
 
     [[nodiscard]] int get_dwarf_connections() const;
+
+    [[nodiscard]] int get_dwarf_centers() const;
+
+    [[nodiscard]] int get_troll_centers() const;
 
 private:
     template<Position TYPE>
