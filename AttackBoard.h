@@ -14,7 +14,7 @@ class AttackBoard {
     int get_range(const class Board& board, Square sq, int dir_index) const;
 
 public:
-    void add_dwarf(const Board& board, Square square, int sign = 1);
+    void add_dwarf(const Board& board, Square square);
 
     void remove_dwarf(const Board& board, Square square);
 
