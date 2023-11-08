@@ -45,7 +45,8 @@ Board::Board(Position type) : board(255, Piece::NONE), to_move(Dwarf) {
         case Position::Full:        fill_position<Position::Full>();        break;
         case Position::Endgame:     fill_position<Position::Endgame>();     break;
     }
-
+    attack_board.init_lines(*this);
+    attack_board.init_empties(*this);
 }
 
 void Board::change_to_move() {
@@ -178,6 +179,7 @@ void Board::remove_dwarf(Square square) {
         }
     }
     dwarfs_remaining--;
+    attack_board.remove_dwarf(*this, square);
 }
 
 void Board::add_dwarf(Square square) {
@@ -193,6 +195,7 @@ void Board::add_dwarf(Square square) {
         }
     }
     dwarfs_remaining++;
+    attack_board.add_dwarf(*this, square);
 }
 
 void Board::remove_troll(Square square) {
@@ -202,6 +205,7 @@ void Board::remove_troll(Square square) {
     }
 
     trolls_remaining--;
+    attack_board.remove_troll(*this, square);
 }
 
 void Board::add_troll(Square square) {
@@ -211,8 +215,21 @@ void Board::add_troll(Square square) {
     }
 
     trolls_remaining++;
+    attack_board.add_troll(*this, square);
 }
 
 EvalType Board::get_eval(const EvalParameters& params) const {
     return evaluation.eval(*this, params);
+}
+
+const std::array<uint8_t, 8> &Board::empty_lengths(Square square) const {
+    return attack_board.get_empty_spaces(square);
+}
+
+const std::array<uint8_t, 8>& Board::line_lengths(Square square) const {
+    return attack_board.get_line_lengths(square);
+}
+
+const std::array<int, 16>& Board::get_controls() const {
+    return attack_board.get_controls();
 }

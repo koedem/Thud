@@ -54,13 +54,26 @@ int count_dwarf_control(const Board& board, Square square, const EvalParameters&
     return eval_term;
 }
 
-int dwarf_controlled_squares(const Board& board, const EvalParameters& params) {
+int old_dwarf_controlled_squares(const Board& board, const EvalParameters& params) {
     int result = 0;
     for (Square sq = 0; sq < 255; sq++) {
         if (board.get_square(sq) == Piece::DWARF) {
             result += count_dwarf_control(board, sq, params);
         }
     }
+    return result;
+}
+
+int dwarf_controlled_squares(const Board& board, const EvalParameters& params) {
+    int result = 0;
+    auto control = board.get_controls();
+    result += control[2] * params.control2;
+    result += control[3] * params.control3;
+    for (int i = 0; i < control.size(); i++) {
+        result += control[i] * params.control4;
+    }
+
+    assert(result == old_dwarf_controlled_squares(board, params));
     return result;
 }
 

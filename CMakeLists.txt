@@ -22,4 +22,7 @@ add_executable(Thud main.cpp Board.h
         TranspositionTable.h
         Evaluation.cpp
         Evaluation.h
-        Parameters.h)
+        Parameters.h
+        clop.h
+        AttackBoard.cpp
+        AttackBoard.h)
