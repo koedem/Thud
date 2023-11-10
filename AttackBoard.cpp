@@ -212,7 +212,7 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
                     space++; // We can capture a troll
                 }
                 int range = std::min(line_length, space);
-                controls[range] -= sign;
+                controls[range] -= 1;
             }
 
             empty_lengths[sq][i] -= empty_length * sign;
@@ -224,7 +224,7 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
                     space++; // We can capture a troll
                 }
                 int range = std::min(line_length, space);
-                controls[range] += sign;
+                controls[range] += 1;
             }
         }
 
@@ -238,7 +238,7 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
                     space++; // We can capture a troll
                 }
                 int range = std::min(line_length, space);
-                controls[range] -= sign;
+                controls[range] -= 1;
             }
 
             empty_lengths[sq][7 - i] -= reverse_empty_length * sign;
@@ -250,7 +250,7 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
                     space++; // We can capture a troll
                 }
                 int range = std::min(line_length, space);
-                controls[range] += sign;
+                controls[range] += 1;
             }
         }
     }
