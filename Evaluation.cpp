@@ -46,7 +46,7 @@ int count_dwarf_control(const Board& board, Square square, const EvalParameters&
     for (int dir = 0; dir < directions.size(); dir++) {
         int length = piece_line_length_in_direction(board, square, (Direction) -directions[dir], Piece::DWARF); // how far can we capture?
 
-        if (length >= 3) {
+        if (length >= 2) {
             int control = controlled(board, length, dir, square);
             eval_term += control_choose(control, params);
         }
@@ -69,7 +69,7 @@ int dwarf_controlled_squares(const Board& board, const EvalParameters& params) {
     auto control = board.get_controls();
     result += control[2] * params.control2;
     result += control[3] * params.control3;
-    for (int i = 0; i < control.size(); i++) {
+    for (int i = 4; i < control.size(); i++) {
         result += control[i] * params.control4;
     }
 
