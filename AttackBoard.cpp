@@ -91,8 +91,8 @@ int AttackBoard::get_range(const Board& board, Square sq, int dir_index) const {
     Direction dir = directions[dir_index];
     int space = empty_lengths[sq][dir_index];
     int line_length = line_lengths[sq][7 - dir_index] + 1;
-    if (board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
-        space++; // We can capture a troll
+    if (space < line_length && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
+        return space + 1; // We can capture a troll
     }
     int range = std::min(line_length, space);
     return range;
