@@ -93,8 +93,29 @@ void dwarf_clop(int argc, char** argv, int depth, int offset) {
     }
 }
 
+void troll_clop(int argc, char** argv, int depth, int offset) {
+    std::string troll_dwarfs(argv[4]), troll_control3(argv[6]), troll_control4(argv[8]), troll_conn(argv[10]);
+    int t_d = std::stoi(troll_dwarfs), t_c3 = std::stoi(troll_control3), t_c4 = std::stoi(troll_control4);
+    int t_conn = std::stoi(troll_conn);
+
+    EvalParameters new_troll = {t_d, 400, t_conn, 1, 0, t_c3, t_c4, true};
+
+    std::uniform_int_distribution<int> dist(0, 200);
+    std::random_device rand;
+    uint32_t random_index = dist(rand);
+    int result = mocked[depth + offset][random_index] - quiet_selfplay(depth + offset, depth, default_dwarf_eval, new_troll);
+
+    if (result == 0) {
+        std::cout << "D" << std::endl;
+    } else if (result > 0) {
+        std::cout << "W" << std::endl;
+    } else {
+        std::cout << "L" << std::endl;
+    }
+}
+
 void compute_clop_mock(int dwarf_depth, int troll_depth) {
-    for (int i = 0; i < 14; i++) {
+    for (int i = 0; i < 200; i++) {
         std::cout << quiet_selfplay(dwarf_depth, troll_depth, default_dwarf_eval, default_troll_eval) << std::endl;
     }
 }
