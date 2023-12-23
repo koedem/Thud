@@ -7,6 +7,78 @@
 #include "TranspositionTable.h"
 #include "MoveGenerator.h"
 
+EvalType Search::q_search(EvalType alpha, EvalType beta) {
+    EvalType q_eval;
+    if (board.get_to_move() == Dwarf) {
+        q_eval = board.get_eval(eval_params);
+    } else {
+        q_eval = -board.get_eval(eval_params);
+    }
+    nodes++;
+
+    if (!eval_params.q_search) {
+        return q_eval;
+    }
+
+    if (q_eval >= beta) {
+        return q_eval;
+    }
+    if (q_eval > alpha) {
+        alpha = q_eval;
+    }
+
+    std::vector<Move> captures;
+    move_gen.generate_captures(captures, board);
+    for (auto& capture : captures) {
+        board.make_move(capture);
+        EvalType inner_eval = -q_search(-beta, -alpha);
+        board.unmake_move(capture);
+        if (inner_eval > q_eval) {
+            q_eval = inner_eval;
+            if (q_eval >= beta) {
+                break;
+            }
+            if (q_eval > alpha) {
+                alpha = q_eval;
+            }
+        }
+    }
+
+    return q_eval;
+}
+
+EvalType Search::nw_q_search(EvalType beta) {
+    EvalType q_eval;
+    if (board.get_to_move() == Dwarf) {
+        q_eval = board.get_eval(eval_params);
+    } else {
+        q_eval = -board.get_eval(eval_params);
+    }
+    nodes++;
+    if (!eval_params.q_search) {
+        return q_eval;
+    }
+
+    if (q_eval >= beta) {
+        return q_eval;
+    }
+
+    std::vector<Move> captures;
+    move_gen.generate_captures(captures, board);
+    for (auto& capture : captures) {
+        board.make_move(capture);
+        EvalType inner_eval = -nw_q_search(-beta + 1);
+        board.unmake_move(capture);
+        if (inner_eval > q_eval) {
+            q_eval = inner_eval;
+            if (q_eval >= beta) {
+                break;
+            }
+        }
+    }
+
+    return q_eval;
+}
 
 int Search::new_depth(int depth, Move move) {
     if (use_extensions) {
@@ -61,12 +133,7 @@ bool Search::tt_probe(Move& move, EvalType& alpha, EvalType& beta, int depth) {
 
 EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
     if (depth == 0) {
-        nodes++;
-        if (board.get_to_move() == Dwarf) {
-            return board.get_eval(eval_params);
-        } else {
-            return -board.get_eval(eval_params);
-        }
+        return nw_q_search(beta);
     }
 
     if (RAZORING && depth == 1) {
@@ -76,9 +143,15 @@ EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
         } else {
             eval = -board.get_eval(eval_params);
         }
+        nodes++;
         if (eval >= beta) { // claim that making a move does not make things worse
-            nodes++;
-            return eval;
+            board.change_to_move(); // Null move
+            EvalType q_eval = -nw_q_search(-beta + 1);
+            board.change_to_move();
+
+            if (q_eval >= beta) {
+                return eval;
+            }
         }
     }
 
@@ -88,6 +161,17 @@ EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
     if (USE_TT && depth >= 2) { // TODO
         if (tt_probe(tt_move, alpha, beta, depth)) {
             return alpha;
+        }
+    }
+
+    if (depth == 1 && board.get_to_move() == Troll) {
+        board.change_to_move();
+        std::vector<Move> captures;
+        move_gen.generate_captures(captures, board);
+        board.change_to_move();
+
+        if (captures.empty()) {
+            return nw_q_search(beta);
         }
     }
 
@@ -123,12 +207,7 @@ EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
 
 EvalType Search::pv_search(uint8_t depth, EvalType alpha, EvalType beta) {
     if (depth == 0) {
-        nodes++;
-        if (board.get_to_move() == Dwarf) {
-            return board.get_eval(eval_params);
-        } else {
-            return -board.get_eval(eval_params);
-        }
+        return q_search(alpha, beta);
     }
 
     Move tt_move = NO_MOVE;

@@ -16,6 +16,8 @@ private:
     TranspositionTable& tt;
     const EvalParameters eval_params;
 
+    EvalType nw_q_search(EvalType beta);
+
     EvalType null_window_search(uint8_t depth, EvalType beta);
 
     bool tt_probe(Move &move, EvalType &alpha, EvalType &beta, int depth);
@@ -25,6 +27,7 @@ public:
 
     Search(Board board, TranspositionTable& tt, EvalParameters eval_params) : board(std::move(board)), tt(tt),
                                                                               eval_params(eval_params) {};
+    EvalType q_search(EvalType alpha, EvalType beta);
 
     EvalType pv_search(uint8_t depth, EvalType alpha, EvalType beta);
 
