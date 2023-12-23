@@ -36,7 +36,7 @@ enum Direction {
 /**
  * List of all directions from north to south and west to east.
  */
-const std::vector<Direction> directions = { Direction::nw, Direction::north, Direction::ne, Direction::west,
+constexpr std::array<Direction, 8> directions = { Direction::nw, Direction::north, Direction::ne, Direction::west,
                                                 Direction::east, Direction::sw, Direction::south, Direction::se };
 
 /**
@@ -81,7 +81,7 @@ struct Move {
      */
     Captures captures;
 
-    void print() {
+    void print() const {
         ::print_colour(to_move);
         ::print_square(from);
         std::cout << "-";
