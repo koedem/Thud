@@ -82,5 +82,11 @@ EvalType Evaluation::eval(const Board& board, const EvalParameters& params) cons
     int material = board.get_dwarf_count() * params.dwarf_factor - board.get_troll_count() * params.troll_factor;
     int dwarf_conns = board.get_dwarf_connections() * params.dwarf_connection_factor;
     int center = (board.get_dwarf_centers() - board.get_troll_centers()) * params.center_factor;
-    return material + dwarf_conns + center + dwarf_control;
+    int eval = material + dwarf_conns + center + dwarf_control;
+
+    if (board.get_to_move() == Dwarf) {
+        return eval;
+    } else {
+        return -eval;
+    }
 }

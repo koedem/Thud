@@ -8,12 +8,7 @@
 #include "MoveGenerator.h"
 
 EvalType Search::q_search(EvalType alpha, EvalType beta) {
-    EvalType q_eval;
-    if (board.get_to_move() == Dwarf) {
-        q_eval = board.get_eval(eval_params);
-    } else {
-        q_eval = -board.get_eval(eval_params);
-    }
+    EvalType q_eval = board.get_eval(eval_params);
     nodes++;
 
     if (!eval_params.q_search) {
@@ -48,12 +43,7 @@ EvalType Search::q_search(EvalType alpha, EvalType beta) {
 }
 
 EvalType Search::nw_q_search(EvalType beta) {
-    EvalType q_eval;
-    if (board.get_to_move() == Dwarf) {
-        q_eval = board.get_eval(eval_params);
-    } else {
-        q_eval = -board.get_eval(eval_params);
-    }
+    EvalType q_eval = board.get_eval(eval_params);
     nodes++;
     if (!eval_params.q_search) {
         return q_eval;
@@ -137,12 +127,7 @@ EvalType Search::null_window_search(uint8_t depth, EvalType beta) {
     }
 
     if (RAZORING && depth == 1) {
-        EvalType eval;
-        if (board.get_to_move() == Dwarf) {
-            eval = board.get_eval(eval_params);
-        } else {
-            eval = -board.get_eval(eval_params);
-        }
+        EvalType eval = board.get_eval(eval_params);
         nodes++;
         if (eval >= beta) { // claim that making a move does not make things worse
             board.change_to_move(); // Null move
