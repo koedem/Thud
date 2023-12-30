@@ -8,10 +8,13 @@ class AttackBoard {
 
     std::array<std::array<uint8_t, 8>, 256> line_lengths = {};
     std::array<std::array<uint8_t, 8>, 256> empty_lengths = {};
+    std::array<std::array<uint8_t, 8>, 256> control_lengths = {};
 
     std::array<int, 16> controls = {};
 
     int get_range(const class Board& board, Square sq, int dir_index) const;
+
+    bool verify_control_lengths() const;
 
 public:
     void add_dwarf(const Board& board, Square square);
