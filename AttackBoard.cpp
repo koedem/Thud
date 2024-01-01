@@ -111,11 +111,11 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         control_lengths[sq][i] = 0;
 
         for (int j = 1; j <= reverse_line_length; j++) {
-            line_lengths[square - j * dir][i] -= line_length;
+            get_line_lengths(square - j * dir)[i] -= line_length;
         }
 
         for (int j = 1; j <= line_length; j++) {
-            line_lengths[square + j * dir][7 - i] -= reverse_line_length;
+            get_line_lengths(square + j * dir)[7 - i] -= reverse_line_length;
         }
         sq = square - (reverse_line_length - 1) * dir;
 
@@ -243,11 +243,11 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         controls[range] -= 1;
 
         for (int j = 1; j <= reverse_line_length; j++) {
-            line_lengths[square - j * dir][i] += line_length;
+            get_line_lengths(square - j * dir)[i] += line_length;
         }
 
         for (int j = 1; j <= line_length; j++) {
-            line_lengths[square + j * dir][7 - i] += reverse_line_length;
+            get_line_lengths(square + j * dir)[7 - i] += reverse_line_length;
         }
         sq = square - (reverse_line_length - 1) * dir;
         range = get_range(board, sq, 7 - i);
@@ -395,12 +395,12 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
 
         int range = std::min(line_length, space_here); // remove the old long range
         if (sign == -1) {
-            control_lengths[forward_square + dir][7 - i] = range;
+            get_control_lengths(forward_square + dir)[7 - i] = range;
         }
         controls[range] -= sign;
         range = std::min(line_length, empty_length + 1);
         if (sign == 1) {
-            control_lengths[forward_square + dir][7 - i] = range;
+            get_control_lengths(forward_square + dir)[7 - i] = range;
         }
         controls[range] += sign;
 
@@ -415,12 +415,12 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
 
         range = std::min(line_length, space_here);
         if (sign == -1) {
-            control_lengths[reverse_square - dir][i] = range;
+            get_control_lengths(reverse_square - dir)[i] = range;
         }
         controls[range] -= sign;
         range = std::min(line_length, reverse_empty_length + 1);
         if (sign == 1) {
-            control_lengths[reverse_square - dir][i] = range;
+            get_control_lengths(reverse_square - dir)[i] = range;
         }
         controls[range] += sign;
     }
@@ -447,10 +447,30 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
     assert(*this == AttackBoard().init_lines(board).init_empties(board).init_controls(board));
 }
 
+/**
+ * This function casts the argument to uint8_t which may over or underflow. This maps a negative index to a valid square.
+ */
+std::array<uint8_t, 8>& AttackBoard::get_line_lengths(Square square) {
+    return line_lengths[square];
+}
+
+/**
+ * This function casts the argument to uint8_t which may over or underflow. This maps a negative index to a valid square.
+ */
+std::array<uint8_t, 8>& AttackBoard::get_control_lengths(Square square) {
+    return control_lengths[square];
+}
+
+/**
+ * This function casts the argument to uint8_t which may over or underflow. This maps a negative index to a valid square.
+ */
 const std::array<uint8_t, 8>& AttackBoard::get_line_lengths(Square square) const {
     return line_lengths[square];
 }
 
+/**
+ * This function casts the argument to uint8_t which may over or underflow. This maps a negative index to a valid square.
+ */
 const std::array<uint8_t, 8>& AttackBoard::get_empty_spaces(Square square) const {
     return empty_lengths[square];
 }

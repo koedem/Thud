@@ -14,6 +14,10 @@ class AttackBoard {
 
     int get_range(const class Board& board, Square sq, int dir_index) const;
 
+    std::array<uint8_t, 8>& get_line_lengths(Square square);
+
+    std::array<uint8_t, 8>& get_control_lengths(Square square);
+
     bool verify_control_lengths() const;
 
 public:
