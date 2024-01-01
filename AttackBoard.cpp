@@ -65,7 +65,7 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
                 int a = 0;
             }
             control_lengths[sq][i] = new_range;
-            controls[range] += 1;
+            controls[new_range] += 1;
         }
 
         sq = square;
@@ -95,7 +95,7 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             }
 
             control_lengths[sq][7 - i] = new_range;
-            controls[range] += 1;
+            controls[new_range] += 1;
         }
 
 
@@ -143,7 +143,7 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             }
 
             control_lengths[sq][7 - i] = new_range;
-            controls[range] += 1;
+            controls[new_range] += 1;
         }
 
         sq = square + (line_length - 1) * dir;
@@ -174,7 +174,7 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             }
 
             control_lengths[sq][i] = new_range;
-            controls[range] += 1;
+            controls[new_range] += 1;
         }
     }
 
@@ -270,16 +270,36 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         sq -= dir;
         if (board.get_square(sq) == Piece::DWARF) {
             int range = get_range(board, sq, i);
+            controls[control_lengths[sq][i]] -= 1;
             control_lengths[sq][i] = 0;
-            controls[range] -= 1;
         }
 
         empty_lengths[sq][i] -= empty_length;
 
         if (board.get_square(sq) == Piece::DWARF) {
+            int length = line_lengths[sq][7 - i] + 1; // length behind us, plus our own dwarf
+            int space = 0;
+            Square temp = sq;
+            while (space < length) {
+                temp += directions[i];
+                if (board.get_square(temp) == Piece::NONE) {
+                    space++;
+                } else {
+                    break;
+                }
+            }
+
+            if (length > space && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
+                ++space;
+            }
+
+
             int range = get_range(board, sq, i);
-            control_lengths[sq][i] = range;
-            controls[range] += 1;
+            if (space != range) {
+                int a = 0;
+            }
+            control_lengths[sq][i] = space;
+            controls[space] += 1;
         }
 
         sq = square;
@@ -319,8 +339,8 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
             if (space != range) {
                 int a = 0;
             }
-            control_lengths[sq][7 - i] = range;
-            controls[range] += 1;
+            control_lengths[sq][7 - i] = space;
+            controls[space] += 1;
         }
     }
 
@@ -348,8 +368,8 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         if (range != new_range) {
             int a = 0;
         }
-        control_lengths[square][7 - dir] = range;
-        controls[range] += 1;
+        control_lengths[square][7 - dir] = new_range;
+        controls[new_range] += 1;
     }
 
 
