@@ -233,14 +233,27 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         int reverse_line_length = line_lengths[square][7 - i] + 1;
 
         Square sq = square - (reverse_line_length - 1) * dir;
-        int range = get_range(board, sq, 7 - i);
-        control_lengths[sq][7 - i] = 0;
-        controls[range] -= 1;
+        int range, bugged_value, bugged_two;
+        if (square != sq) {
+            range = get_range(board, sq, 7 - i);
+            bugged_value = square == sq ? range : 0;
+            if (range != control_lengths[sq][7 - i] && (range > 1 || control_lengths[sq][7 - i] > 1)) {
+                int a = 0;
+            }
+            control_lengths[sq][7 - i] = 0;
+            controls[range] -= 1;
+        }
 
         sq = square + (line_length - 1) * dir;
-        range = get_range(board, sq, i);
-        control_lengths[sq][i] = 0;
-        controls[range] -= 1;
+        if (square != sq) {
+            range = get_range(board, sq, i);
+            bugged_two = square == sq ? range : 0;
+            if (range != control_lengths[sq][i] && (range > 1 || control_lengths[sq][i] > 1)) {
+                int a = 0;
+            }
+            control_lengths[sq][i] = 0;
+            controls[range] -= 1;
+        }
 
         for (int j = 1; j <= reverse_line_length; j++) {
             get_line_lengths(square - j * dir)[i] += line_length;
@@ -251,13 +264,73 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         }
         sq = square - (reverse_line_length - 1) * dir;
         range = get_range(board, sq, 7 - i);
-        control_lengths[sq][7 - i] = range;
-        controls[range] += 1;
+
+
+        if (square != sq && board.get_square(sq) == Piece::DWARF) {
+            int length = line_lengths[sq][i] + 1; // length behind us, plus our own dwarf
+            int space = 0;
+            Square temp = sq;
+            while (space < length) {
+                temp += directions[7 - i];
+                if (board.get_square(temp) == Piece::NONE) {
+                    space++;
+                } else {
+                    break;
+                }
+            }
+
+            if (length > space && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
+                ++space;
+            }
+
+
+            int range = get_range(board, sq, 7 - i);
+            if (space != range) {
+                int a = 0;
+            }
+            if (bugged_value > 1 && bugged_value != range) {
+                int a = 0;
+            }
+            control_lengths[sq][7 - i] = range;
+            controls[range] += 1;
+        }
+
+
 
         sq = square + (line_length - 1) * dir;
         range = get_range(board, sq, i);
-        control_lengths[sq][i] = range;
-        controls[range] += 1;
+
+
+
+        if (square != sq && board.get_square(sq) == Piece::DWARF) {
+            int length = line_lengths[sq][7 - i] + 1; // length behind us, plus our own dwarf
+            int space = 0;
+            Square temp = sq;
+            while (space < length) {
+                temp += directions[i];
+                if (board.get_square(temp) == Piece::NONE) {
+                    space++;
+                } else {
+                    break;
+                }
+            }
+
+            if (length > space && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
+                ++space;
+            }
+
+
+            int range = get_range(board, sq, i);
+            if (space != range) {
+                int a = 0;
+            }
+            if (bugged_two > 1 && bugged_two != range) {
+                int a = 0;
+            }
+            control_lengths[sq][i] = space;
+            controls[space] += 1;
+        }
+
 
         int empty_length = empty_lengths[square][i] + 1;
         int reverse_empty_length = empty_lengths[square][7 - i] + 1;
@@ -289,7 +362,7 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
                 }
             }
 
-            if (length > space && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
+            if (length > space && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
                 ++space;
             }
 
