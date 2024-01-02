@@ -1,6 +1,3 @@
-//
-// Created by kolja on 11/7/23.
-//
 
 #include "AttackBoard.h"
 #include "Board.h"
@@ -51,25 +48,16 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             sq -= dir;
             ++reverse_empty_length;
         } while (board.get_square(sq) == Piece::NONE);
-        int old = empty_lengths[square][i] + 1;
-        int reverse_old = empty_lengths[square][7 - i] + 1;
-
-        if (old != empty_length || reverse_old != reverse_empty_length) {
-            int a = 0;
-        }
 
         sq = square;
         for (int j = 1; j < reverse_empty_length; j++) {
             sq -= dir;
-            empty_lengths[sq][i] += empty_length;
         }
         sq -= dir;
         if (board.get_square(sq) == Piece::DWARF) {
             controls[control_lengths[sq][i]] -= 1;
             control_lengths[sq][i] = 0;
         }
-
-        empty_lengths[sq][i] += empty_length;
 
         if (board.get_square(sq) == Piece::DWARF) { // should this work for the 8er?
             int line_length = line_lengths[sq][7 - i] + 1;
@@ -85,15 +73,12 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         sq = square;
         for (int j = 1; j < empty_length; j++) {
             sq += dir;
-            empty_lengths[sq][7 - i] += reverse_empty_length;
         }
         sq += dir;
         if (board.get_square(sq) == Piece::DWARF) {
             controls[control_lengths[sq][7 - i]] -= 1;
             control_lengths[sq][7 - i] = 0;
         }
-
-        empty_lengths[sq][7 - i] += reverse_empty_length;
 
         if (board.get_square(sq) == Piece::DWARF) {
             int line_length = line_lengths[sq][i] + 1;
@@ -291,7 +276,6 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         sq = square;
         do {
             sq -= dir;
-            empty_lengths[sq][i] -= empty_length;
             ++reverse_empty_length;
         } while (board.get_square(sq) == Piece::NONE);
 
@@ -329,7 +313,6 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         sq = square;
         for (int j = 1; j < empty_length; j++) {
             sq += dir;
-            empty_lengths[sq][7 - i] -= reverse_empty_length;
         }
         sq += dir;
 
@@ -337,8 +320,6 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
             controls[control_lengths[sq][7 - i]] -= 1;
             control_lengths[sq][7 - i] = 0;
         }
-
-        empty_lengths[sq][7 - i] -= reverse_empty_length;
 
         if (board.get_square(sq) == Piece::DWARF) {
             int length = line_lengths[sq][i] + 1; // length behind us, plus our own dwarf
@@ -394,7 +375,7 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         }
     }
     if constexpr (assertion_level >= 4) {
-        bool passed = *this == AttackBoard().init_lines(board).init_empties(board).init_controls(board);
+        bool passed = *this == AttackBoard().init_lines(board).init_controls(board);
         if (!passed) {
             std::cout << "Failed attack board equality test in add_dwarf" << std::endl;
             abort();
@@ -458,26 +439,8 @@ void AttackBoard::add_troll(const Board &board, Square square, int sign) {
         controls[range] += sign;
     }
 
-
-    // old code for compatibility reasons
-    for (int i = 0; i < directions.size() / 2; i++) {
-        Direction dir = directions[i];
-        int empty_length = empty_lengths[square][i] + 1;
-        int reverse_empty_length = empty_lengths[square][7 - i] + 1;
-
-        for (int j = 1; j <= reverse_empty_length; j++) {
-            Square sq = square - j * dir;
-            empty_lengths[sq][i] -= empty_length * sign;
-        }
-
-        for (int j = 1; j <= empty_length; j++) {
-            Square sq = square + j * dir;
-            empty_lengths[sq][7 - i] -= reverse_empty_length * sign;
-        }
-    }
-
     assert(verify_control_lengths());
-    assert(*this == AttackBoard().init_lines(board).init_empties(board).init_controls(board));
+    assert(*this == AttackBoard().init_lines(board).init_controls(board));
 }
 
 /**
@@ -501,24 +464,13 @@ const std::array<uint8_t, 8>& AttackBoard::get_line_lengths(Square square) const
     return line_lengths[square];
 }
 
-/**
- * This function casts the argument to uint8_t which may over or underflow. This maps a negative index to a valid square.
- */
-const std::array<uint8_t, 8>& AttackBoard::get_empty_spaces(Square square) const {
-    return empty_lengths[square];
-}
-
 bool AttackBoard::operator==(const AttackBoard &other) const {
     for (Square square = 0; square < 255; square++) {
         if (!square_on_board(square)) {
             continue;
         }
         for (int i = 0; i < 8; i++) {
-            Direction dir = directions[i];
             if (line_lengths[square][i] != other.line_lengths[square][i]) {
-                return false;
-            }
-            if (empty_lengths[square][i] != other.empty_lengths[square][i]) {
                 return false;
             }
         }
@@ -543,16 +495,24 @@ AttackBoard& AttackBoard::init_controls(const Board& board) {
         }
 
         auto full = get_line_lengths(sq);
-        auto empty = get_empty_spaces(sq);
         for (int dir = 0; dir < directions.size(); dir++) {
             int length = full[dir] + 1; // length behind us, plus our own dwarf
-            int space = empty[7 - dir];
-            if (board.get_square(sq - (space + 1) * directions[dir]) == Piece::TROLL) {
-                space++; // We can capture a troll
+            int space = 0;
+            Square temp = sq;
+            while (space < length) {
+                temp += directions[7 - dir];
+                if (board.get_square(temp) == Piece::NONE) {
+                    space++;
+                } else {
+                    break;
+                }
             }
-            int range = std::min(length, space);
-            control_lengths[sq][dir] = range;
-            controls[range]++;
+
+            if (length > space && board.get_square(sq - (space + 1) * directions[dir]) == Piece::TROLL) {
+                ++space; // We can capture a troll
+            }
+            control_lengths[sq][dir] = space;
+            controls[space]++;
         }
     }
     return *this;
@@ -580,27 +540,6 @@ AttackBoard& AttackBoard::init_lines(const Board& board) {
 }
 
 AttackBoard& AttackBoard::init_empties(const Board& board) {
-    for (Square square = 0; square < 255; square++) {
-        if (!square_on_board(square)) {
-            continue;
-        }
-
-        for (int i = 0; i < 8; i++) {
-            Direction dir = directions[i];
-
-            Square sq = square + dir;
-            int length = 0;
-            while (board.get_square(sq) == Piece::NONE) {
-                length++;
-                sq += dir;
-            }
-            /*if (board.get_square(sq) == Piece::TROLL) { // TODO
-                length++; // Dwarfs can capture trolls, so let's count that as movable-to space.
-            }*/
-
-            empty_lengths[square][i] = length;
-        }
-    }
     return *this;
 }
 

@@ -7,7 +7,6 @@
 class AttackBoard {
 
     std::array<std::array<uint8_t, 8>, 256> line_lengths = {};
-    std::array<std::array<uint8_t, 8>, 256> empty_lengths = {};
     std::array<std::array<uint8_t, 8>, 256> control_lengths = {};
 
     std::array<int, 16> controls = {};
@@ -28,8 +27,6 @@ public:
     void remove_troll(const Board& board, Square square);
 
     [[nodiscard]] const std::array<uint8_t, 8>& get_line_lengths(Square square) const;
-
-    [[nodiscard]] const std::array<uint8_t, 8>& get_empty_spaces(Square square) const;
 
     AttackBoard& init_lines(const Board& board);
 
