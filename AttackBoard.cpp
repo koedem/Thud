@@ -36,10 +36,29 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
     for (int i = 0; i < directions.size() / 2; i++) {
         Direction dir = directions[i];
 
-        int empty_length = empty_lengths[square][i] + 1;
-        int reverse_empty_length = empty_lengths[square][7 - i] + 1;
-
+        int empty_length = 0;
         Square sq = square;
+        do {
+            sq += dir;
+            ++empty_length;
+        } while (board.get_square(sq) == Piece::NONE);
+
+
+        int reverse_empty_length = 0;
+
+        sq = square;
+        do {
+            sq -= dir;
+            ++reverse_empty_length;
+        } while (board.get_square(sq) == Piece::NONE);
+        int old = empty_lengths[square][i] + 1;
+        int reverse_old = empty_lengths[square][7 - i] + 1;
+
+        if (old != empty_length || reverse_old != reverse_empty_length) {
+            int a = 0;
+        }
+
+        sq = square;
         for (int j = 1; j < reverse_empty_length; j++) {
             sq -= dir;
             empty_lengths[sq][i] += empty_length;
