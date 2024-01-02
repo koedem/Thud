@@ -53,19 +53,14 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         empty_lengths[sq][i] += empty_length;
 
         if (board.get_square(sq) == Piece::DWARF) { // should this work for the 8er?
-            int range = get_range(board, sq, i);
-
             int line_length = line_lengths[sq][7 - i] + 1;
             int space = reverse_empty_length + empty_length - 1;
             if (space < line_length && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
                 ++space; // We can capture a troll
             }
-            int new_range = std::min(line_length, space);
-            if (range != new_range) {
-                int a = 0;
-            }
-            control_lengths[sq][i] = new_range;
-            controls[new_range] += 1;
+            int range = std::min(line_length, space); // TODO this will be space
+            control_lengths[sq][i] = range;
+            controls[range] += 1;
         }
 
         sq = square;
@@ -82,20 +77,15 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         empty_lengths[sq][7 - i] += reverse_empty_length;
 
         if (board.get_square(sq) == Piece::DWARF) {
-            int range = get_range(board, sq, 7 - i);
-
             int line_length = line_lengths[sq][i] + 1;
             int space = reverse_empty_length + empty_length - 1;
             if (space < line_length && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
                 ++space; // We can capture a troll
             }
-            int new_range = std::min(line_length, space);
-            if (range != new_range) {
-                int a = 0;
-            }
+            int range = std::min(line_length, space);
 
-            control_lengths[sq][7 - i] = new_range;
-            controls[new_range] += 1;
+            control_lengths[sq][7 - i] = range;
+            controls[range] += 1;
         }
 
 
@@ -120,9 +110,6 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         sq = square - (reverse_line_length - 1) * dir;
 
         if (board.get_square(sq) == Piece::DWARF) {
-            int range = get_range(board, sq, 7 - i);
-
-
             int ll = line_lengths[sq][i] + 1;
             int space = 0;
             Square temp = sq;
@@ -137,21 +124,13 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             if (space < ll && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
                 ++space; // We can capture a troll
             }
-            int new_range = std::min(ll, space);
-            if (range != new_range) {
-                int a = 0;
-            }
-
-            control_lengths[sq][7 - i] = new_range;
-            controls[new_range] += 1;
+            control_lengths[sq][7 - i] = space;
+            controls[space] += 1;
         }
 
         sq = square + (line_length - 1) * dir;
 
         if (board.get_square(sq) == Piece::DWARF) {
-            int range = get_range(board, sq, i);
-
-
             int ll = line_lengths[sq][7 - i] + 1;
 
             int space = 0;
@@ -159,7 +138,7 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             while (space < ll) {
                 temp += dir;
                 if (board.get_square(temp) == Piece::NONE) {
-                    space++;
+                    ++space;
                 } else {
                     break;
                 }
@@ -168,13 +147,8 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             if (space < ll && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
                 ++space; // We can capture a troll
             }
-            int new_range = std::min(ll, space);
-            if (range != new_range) {
-                int a = 0;
-            }
-
-            control_lengths[sq][i] = new_range;
-            controls[new_range] += 1;
+            control_lengths[sq][i] = space;
+            controls[space] += 1;
         }
     }
 
