@@ -172,6 +172,39 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
     }
 }
 
+
+
+void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Direction dir, int i, int square) {
+    if (line_length <= 1) {
+        return;
+    }
+
+    Square sq = square + (line_length - 1) * dir;
+    int old_range = control_lengths[sq][i];
+    if (old_range < line_length - 1) { // If we are blocked sooner than this, then more length does not help
+        return;
+    }
+
+    int length = line_lengths[sq][7 - i] + 1; // length behind us, plus our own dwarf
+    int space = old_range - 1;
+    Square temp = sq + space * dir;
+    while (space < length) {
+        temp += dir;
+        if (board.get_square(temp) == Piece::NONE) {
+            space++;
+        } else {
+            break;
+        }
+    }
+
+    if (length > space && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
+        ++space;
+    }
+    controls[old_range] -= 1;
+    control_lengths[sq][i] = space;
+    controls[space] += 1;
+}
+
 /*
  * Control procedure for adding a dwarf: for each direction, remove the neighbor control line that is now blocked by us
  * Also remove the far end that will get lengthened. Then update the line lengths in that direction.
@@ -208,55 +241,8 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
          * If reverse_line_length is not bigger than 1, then there is no other dwarf on that side of us, so we don't need
          * to do anything here.
          */
-        if (reverse_line_length > 1) {
-            Square sq = square - (reverse_line_length - 1) * dir;
-            int old_range = control_lengths[sq][7 - i];
-            if (old_range >= reverse_line_length - 1) { // If we are blocked sooner than this, then more length does not help
-                int length = line_lengths[sq][i] + 1; // length behind us, plus our own dwarf
-                int space = old_range - 1;
-                Square temp = sq - space * dir;
-                while (space < length) {
-                    temp -= dir;
-                    if (board.get_square(temp) == Piece::NONE) {
-                        space++;
-                    } else {
-                        break;
-                    }
-                }
-
-                if (length > space && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
-                    ++space;
-                }
-                controls[old_range] -= 1;
-                control_lengths[sq][7 - i] = space;
-                controls[space] += 1;
-            }
-        }
-
-        if (line_length > 1) {
-            Square sq = square + (line_length - 1) * dir;
-            int old_range = control_lengths[sq][i];
-            if (old_range >= line_length - 1) { // If we are blocked sooner than this, then more length does not help
-                int length = line_lengths[sq][7 - i] + 1; // length behind us, plus our own dwarf
-                int space = old_range - 1;
-                Square temp = sq + space * dir;
-                while (space < length) {
-                    temp += dir;
-                    if (board.get_square(temp) == Piece::NONE) {
-                        space++;
-                    } else {
-                        break;
-                    }
-                }
-
-                if (length > space && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
-                    ++space;
-                }
-                controls[old_range] -= 1;
-                control_lengths[sq][i] = space;
-                controls[space] += 1;
-            }
-        }
+        lengthen_outside_dwarf(board, line_length, dir, i, square);
+        lengthen_outside_dwarf(board, reverse_line_length, (Direction) -dir, 7 - i, square);
 
 
         int reverse_empty_length = 0;

@@ -15,10 +15,12 @@ class AttackBoard {
 
     std::array<uint8_t, 8>& get_control_lengths(Square square);
 
+    void lengthen_outside_dwarf(const class Board &board, int line_length, Direction dir, int i, int square);
+
     bool verify_control_lengths() const;
 
 public:
-    void add_dwarf(const class Board& board, Square square);
+    void add_dwarf(const Board& board, Square square);
 
     void remove_dwarf(const Board& board, Square square);
 
