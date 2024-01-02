@@ -191,8 +191,12 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         int line_length = line_lengths[square][i] + 1;
         int reverse_line_length = line_lengths[square][7 - i] + 1;
 
+        /*
+         * This is the furthest dwarf opposite of direction dir. We remove the old control distance and then add the new
+         * possibly increased distance instead. TODO: this need not be split up, one could find the new value here already
+         */
         Square sq = square - (reverse_line_length - 1) * dir;
-        if (square != sq) {
+        if (square != sq) { // If there are no dwarves there but just the dwarf just added, nothing to be done here
             controls[control_lengths[sq][7 - i]] -= 1;
             control_lengths[sq][7 - i] = 0;
         }
@@ -255,21 +259,32 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         }
 
 
-        int empty_length = empty_lengths[square][i] + 1;
-        int reverse_empty_length = empty_lengths[square][7 - i] + 1;
+        int empty_length = 0;
+        sq = square;
+        do {
+            sq += dir;
+            ++empty_length;
+        } while (board.get_square(sq) == Piece::NONE);
+
+
+        int reverse_empty_length = 0;
 
         sq = square;
-        for (int j = 1; j < reverse_empty_length; j++) {
+        do {
             sq -= dir;
             empty_lengths[sq][i] -= empty_length;
-        }
-        sq -= dir;
+            ++reverse_empty_length;
+        } while (board.get_square(sq) == Piece::NONE);
+
+        /*
+         * We scan the empty lines going out from our just added dwarf. If there is another dwarf at the end of the
+         * rainbow it may be blocked by the dwarf that just got added. In that case we need to reduce that other dwarfs
+         * control range.
+         */
         if (board.get_square(sq) == Piece::DWARF) {
             controls[control_lengths[sq][i]] -= 1;
             control_lengths[sq][i] = 0;
         }
-
-        empty_lengths[sq][i] -= empty_length;
 
         if (board.get_square(sq) == Piece::DWARF) {
             int length = line_lengths[sq][7 - i] + 1; // length behind us, plus our own dwarf
@@ -328,6 +343,9 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
         }
     }
 
+    /*
+     * Here we add the controls of the dwarf that just got added.
+     */
     for (int dir = 0; dir < directions.size(); dir++) {
         int length = line_lengths[square][dir] + 1; // length behind us, plus our own dwarf
         int space = 0;
