@@ -83,14 +83,6 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         line_length = line_lengths[square][i] + 1;
         int reverse_line_length = line_lengths[square][7 - i] + 1;
 
-        sq = square - (reverse_line_length - 1) * dir;
-        controls[control_lengths[sq][7 - i]] -= 1;
-        control_lengths[sq][7 - i] = 0;
-
-        sq = square + (line_length - 1) * dir;
-        controls[control_lengths[sq][i]] -= 1;
-        control_lengths[sq][i] = 0;
-
         for (int j = 1; j <= reverse_line_length; j++) {
             get_line_lengths(square - j * dir)[i] -= line_length;
         }
@@ -98,48 +90,28 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         for (int j = 1; j <= line_length; j++) {
             get_line_lengths(square + j * dir)[7 - i] -= reverse_line_length;
         }
-        sq = square - (reverse_line_length - 1) * dir;
 
-        if (board.get_square(sq) == Piece::DWARF) {
-            int ll = line_lengths[sq][i] + 1;
-            int space = 0;
-            Square temp = sq;
-            while (space < ll) {
-                temp -= dir;
-                if (board.get_square(temp) == Piece::NONE) {
-                    space++;
-                } else {
-                    break;
-                }
+        if (reverse_line_length > 1) {
+            sq = square - (reverse_line_length - 1) * dir;
+            int old = control_lengths[sq][7 - i];
+            if (old > reverse_line_length - 1) {
+                controls[old] -= 1;
+                int space = reverse_line_length - 1;
+                control_lengths[sq][7 - i] = space;
+                controls[space] += 1;
             }
-            if (space < ll && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
-                ++space; // We can capture a troll
-            }
-            control_lengths[sq][7 - i] = space;
-            controls[space] += 1;
         }
 
-        sq = square + (line_length - 1) * dir;
 
-        if (board.get_square(sq) == Piece::DWARF) {
-            int ll = line_lengths[sq][7 - i] + 1;
-
-            int space = 0;
-            Square temp = sq;
-            while (space < ll) {
-                temp += dir;
-                if (board.get_square(temp) == Piece::NONE) {
-                    ++space;
-                } else {
-                    break;
-                }
+        if (line_length > 1) {
+            sq = square + (line_length - 1) * dir;
+            int old = control_lengths[sq][i];
+            if (old > line_length - 1) {
+                controls[old] -= 1;
+                int space = line_length - 1;
+                control_lengths[sq][i] = space;
+                controls[space] += 1;
             }
-
-            if (space < ll && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
-                ++space; // We can capture a troll
-            }
-            control_lengths[sq][i] = space;
-            controls[space] += 1;
         }
     }
 
