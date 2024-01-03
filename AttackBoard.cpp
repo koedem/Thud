@@ -49,11 +49,6 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             ++reverse_empty_length;
         } while (board.get_square(sq) == Piece::NONE);
 
-        sq = square;
-        for (int j = 1; j < reverse_empty_length; j++) {
-            sq -= dir;
-        }
-        sq -= dir;
         if (board.get_square(sq) == Piece::DWARF) {
             controls[control_lengths[sq][i]] -= 1;
             control_lengths[sq][i] = 0;
@@ -208,11 +203,13 @@ void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Di
     controls[space] += 1;
 }
 
-/*
+/**
  * We scan the empty lines going out from our just added dwarf. If there is another dwarf at the end of the
  * rainbow it may be blocked by the dwarf that just got added. In that case we need to reduce that other dwarfs
  * control range.
-*/
+ * @return The empty length starting from square towards direction dir.
+ *         This includes a potentially captureable troll at the end.
+ */
 int AttackBoard::shorten_blocked_dwarf(const Board& board, Square square, Direction dir, int i) {
     int empty_length = 0;
     Square sq = square + dir;
