@@ -49,34 +49,26 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             ++reverse_empty_length;
         } while (board.get_square(sq) == Piece::NONE);
 
-        if (board.get_square(sq) == Piece::DWARF) {
+        int line_length = line_lengths[sq + dir][7 - i];
+        if (reverse_empty_length - 1 < line_length) {
             controls[control_lengths[sq][i]] -= 1;
             control_lengths[sq][i] = 0;
-        }
 
-        if (board.get_square(sq) == Piece::DWARF) { // should this work for the 8er?
-            int line_length = line_lengths[sq][7 - i] + 1;
             int space = reverse_empty_length + empty_length - 1;
             if (space < line_length && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
                 ++space; // We can capture a troll
             }
-            int range = std::min(line_length, space); // TODO this will be space
+            int range = std::min(line_length, space);
             control_lengths[sq][i] = range;
             controls[range] += 1;
         }
 
-        sq = square;
-        for (int j = 1; j < empty_length; j++) {
-            sq += dir;
-        }
-        sq += dir;
-        if (board.get_square(sq) == Piece::DWARF) {
+        sq = square + empty_length * dir;
+        line_length = line_lengths[sq - dir][i];
+        if (empty_length - 1 < line_length) {
             controls[control_lengths[sq][7 - i]] -= 1;
             control_lengths[sq][7 - i] = 0;
-        }
 
-        if (board.get_square(sq) == Piece::DWARF) {
-            int line_length = line_lengths[sq][i] + 1;
             int space = reverse_empty_length + empty_length - 1;
             if (space < line_length && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
                 ++space; // We can capture a troll
@@ -88,7 +80,7 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         }
 
 
-        int line_length = line_lengths[square][i] + 1;
+        line_length = line_lengths[square][i] + 1;
         int reverse_line_length = line_lengths[square][7 - i] + 1;
 
         sq = square - (reverse_line_length - 1) * dir;
@@ -190,14 +182,15 @@ void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Di
         temp += dir;
         if (board.get_square(temp) == Piece::NONE) {
             space++;
+        } else if (length > space && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
+            ++space;
+            break;
         } else {
             break;
         }
     }
 
-    if (length > space && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
-        ++space;
-    }
+
     controls[old_range] -= 1;
     control_lengths[sq][i] = space;
     controls[space] += 1;
