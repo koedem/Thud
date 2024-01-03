@@ -24,6 +24,39 @@ int empty_range(const class Board &board, Square square, Direction dir) {
     return length;
 }
 
+void AttackBoard::lengthen_unblocked_dwarf(const Board& board, int empty_length, int reverse_empty_length, Direction dir, int i, Square square) {
+    Square sq = square + (empty_length + 1) * dir;
+    int line_length = line_lengths[sq - dir][i];
+    if (empty_length < line_length) {
+        controls[control_lengths[sq][7 - i]] -= 1;
+        int space = reverse_empty_length + empty_length + 1;
+        if (space < line_length && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
+            ++space; // We can capture a troll
+        }
+        int range = std::min(line_length, space);
+
+        control_lengths[sq][7 - i] = range;
+        controls[range] += 1;
+    }
+}
+
+void AttackBoard::shorten_outside_dwarf(int line_length, Direction dir, int i, Square square) {
+    if (line_length <= 1) {
+        return;
+    }
+
+    Square sq = square + (line_length - 1) * dir;
+    int old_range = control_lengths[sq][i];
+    if (old_range <= line_length - 1) {
+        return;
+    }
+
+    controls[old_range] -= 1;
+    int space = line_length - 1;
+    control_lengths[sq][i] = space;
+    controls[space] += 1;
+}
+
 void AttackBoard::remove_dwarf(const Board& board, Square square) {
     for (int dir = 0; dir < directions.size(); dir++) {
         controls[control_lengths[square][dir]] -= 1;
@@ -34,53 +67,24 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
         Direction dir = directions[i];
 
         int empty_length = 0;
-        Square sq = square;
-        do {
-            sq += dir;
+        Square sq = square + dir;
+        while (board.get_square(sq) == Piece::NONE) {
             ++empty_length;
-        } while (board.get_square(sq) == Piece::NONE);
-
+            sq += dir;
+        }
 
         int reverse_empty_length = 0;
-
-        sq = square;
-        do {
-            sq -= dir;
+        sq = square - dir;
+        while (board.get_square(sq) == Piece::NONE) {
             ++reverse_empty_length;
-        } while (board.get_square(sq) == Piece::NONE);
-
-        int line_length = line_lengths[sq + dir][7 - i];
-        if (reverse_empty_length - 1 < line_length) {
-            controls[control_lengths[sq][i]] -= 1;
-            control_lengths[sq][i] = 0;
-
-            int space = reverse_empty_length + empty_length - 1;
-            if (space < line_length && board.get_square(sq + (space + 1) * dir) == Piece::TROLL) {
-                ++space; // We can capture a troll
-            }
-            int range = std::min(line_length, space);
-            control_lengths[sq][i] = range;
-            controls[range] += 1;
+            sq -= dir;
         }
 
-        sq = square + empty_length * dir;
-        line_length = line_lengths[sq - dir][i];
-        if (empty_length - 1 < line_length) {
-            controls[control_lengths[sq][7 - i]] -= 1;
-            control_lengths[sq][7 - i] = 0;
-
-            int space = reverse_empty_length + empty_length - 1;
-            if (space < line_length && board.get_square(sq - (space + 1) * dir) == Piece::TROLL) {
-                ++space; // We can capture a troll
-            }
-            int range = std::min(line_length, space);
-
-            control_lengths[sq][7 - i] = range;
-            controls[range] += 1;
-        }
+        lengthen_unblocked_dwarf(board, reverse_empty_length, empty_length, (Direction) -dir, 7 - i, square);
+        lengthen_unblocked_dwarf(board, empty_length, reverse_empty_length, dir, i, square);
 
 
-        line_length = line_lengths[square][i] + 1;
+        int line_length = line_lengths[square][i] + 1;
         int reverse_line_length = line_lengths[square][7 - i] + 1;
 
         for (int j = 1; j <= reverse_line_length; j++) {
@@ -91,28 +95,8 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
             get_line_lengths(square + j * dir)[7 - i] -= reverse_line_length;
         }
 
-        if (reverse_line_length > 1) {
-            sq = square - (reverse_line_length - 1) * dir;
-            int old = control_lengths[sq][7 - i];
-            if (old > reverse_line_length - 1) {
-                controls[old] -= 1;
-                int space = reverse_line_length - 1;
-                control_lengths[sq][7 - i] = space;
-                controls[space] += 1;
-            }
-        }
-
-
-        if (line_length > 1) {
-            sq = square + (line_length - 1) * dir;
-            int old = control_lengths[sq][i];
-            if (old > line_length - 1) {
-                controls[old] -= 1;
-                int space = line_length - 1;
-                control_lengths[sq][i] = space;
-                controls[space] += 1;
-            }
-        }
+        shorten_outside_dwarf(reverse_line_length, (Direction) -dir, 7 - i, square);
+        shorten_outside_dwarf(line_length, dir, i, square);
     }
 
     if constexpr (assertion_level >= 3) {
@@ -136,7 +120,7 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
  * If line_length is not bigger than 1, then there is no other dwarf on that side of us, so we don't need
  * to do anything here.
  */
-void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Direction dir, int i, int square) {
+void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Direction dir, int i, Square square) {
     if (line_length <= 1) {
         return;
     }
