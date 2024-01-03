@@ -17,6 +17,8 @@ class AttackBoard {
 
     void lengthen_outside_dwarf(const class Board &board, int line_length, Direction dir, int i, int square);
 
+    int shorten_blocked_dwarf(const Board& board, Square square, Direction dir, int i);
+
     bool verify_control_lengths() const;
 
 public:

@@ -172,8 +172,11 @@ void AttackBoard::remove_dwarf(const Board& board, Square square) {
     }
 }
 
-
-
+/*
+ * Use the increased length gained from adding the dwarf to update how far we can capture on either end of its line
+ * If line_length is not bigger than 1, then there is no other dwarf on that side of us, so we don't need
+ * to do anything here.
+ */
 void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Direction dir, int i, int square) {
     if (line_length <= 1) {
         return;
@@ -206,6 +209,34 @@ void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Di
 }
 
 /*
+ * We scan the empty lines going out from our just added dwarf. If there is another dwarf at the end of the
+ * rainbow it may be blocked by the dwarf that just got added. In that case we need to reduce that other dwarfs
+ * control range.
+*/
+int AttackBoard::shorten_blocked_dwarf(const Board& board, Square square, Direction dir, int i) {
+    int empty_length = 0;
+    Square sq = square + dir;
+    while (board.get_square(sq) == Piece::NONE) {
+        ++empty_length;
+        sq += dir;
+    }
+
+    int length = line_lengths[sq - dir][i];
+    if (empty_length < length) {    // Otherwise there's not enough length to reach the added dwarf, so nothing would be blocked
+                                    // This implies that there is a dwarf on sq, otherwise the length couldn't be longer
+        controls[control_lengths[sq][7 - i]] -= 1;  // So we remove the old value for it
+        int space = std::min(length, empty_length);
+        control_lengths[sq][7 - i] = space; // and add the new value
+        controls[space] += 1;
+    }
+
+    if (board.get_square(sq) == Piece::TROLL) {
+        ++empty_length;
+    }
+    return empty_length;
+}
+
+/* TODO update doc
  * Control procedure for adding a dwarf: for each direction, remove the neighbor control line that is now blocked by us
  * Also remove the far end that will get lengthened. Then update the line lengths in that direction.
  * Then add at the opposite end of this the new longer range.
@@ -223,12 +254,12 @@ void AttackBoard::lengthen_outside_dwarf(const Board &board, int line_length, Di
  *
  */
 void AttackBoard::add_dwarf(const Board& board, Square square) {
-    for (int i = 0; i < directions.size() / 2; i++) {
-        Direction dir = directions[i];
+    for (int i = 0; i < directions.size() / 2; i++) { // Update the line lengths everywhere
+        Direction dir = directions[i], reverse_dir = directions[7 - i];
         int line_length = line_lengths[square][i] + 1;
         int reverse_line_length = line_lengths[square][7 - i] + 1;
 
-        for (int j = 1; j <= reverse_line_length; j++) { // Step 1: on either side of the dwarf, update the line lengths
+        for (int j = 1; j <= reverse_line_length; j++) { // On either side of the dwarf, update the line lengths
             get_line_lengths(square - j * dir)[i] += line_length; // I.e. add for each dwarf of the line, the length from the other side + 1
         }
 
@@ -236,82 +267,18 @@ void AttackBoard::add_dwarf(const Board& board, Square square) {
             get_line_lengths(square + j * dir)[7 - i] += reverse_line_length;
         }
 
-        /*
-         * Step 2: Use that increased length gained from above to update how far we can capture on either end of that line
-         * If reverse_line_length is not bigger than 1, then there is no other dwarf on that side of us, so we don't need
-         * to do anything here.
-         */
         lengthen_outside_dwarf(board, line_length, dir, i, square);
-        lengthen_outside_dwarf(board, reverse_line_length, (Direction) -dir, 7 - i, square);
+        int space = shorten_blocked_dwarf(board, square, reverse_dir, 7 - i);
+        int range = std::min(line_length, space);
+        control_lengths[square][7 - i] = range;
+        controls[range] += 1;
 
-
-        int reverse_empty_length = 0;
-        Square sq = square;
-        do {
-            sq -= dir;
-            ++reverse_empty_length;
-        } while (board.get_square(sq) == Piece::NONE);
-
-        /*
-         * We scan the empty lines going out from our just added dwarf. If there is another dwarf at the end of the
-         * rainbow it may be blocked by the dwarf that just got added. In that case we need to reduce that other dwarfs
-         * control range.
-         */
-        if (board.get_square(sq) == Piece::DWARF) {
-            controls[control_lengths[sq][i]] -= 1;
-            control_lengths[sq][i] = 0;
-        }
-
-        if (board.get_square(sq) == Piece::DWARF) {
-            int length = line_lengths[sq][7 - i] + 1; // length behind us, plus our own dwarf
-            int space = std::min(length, reverse_empty_length - 1);
-            control_lengths[sq][i] = space;
-            controls[space] += 1;
-        }
-
-        int empty_length = 0;
-        sq = square;
-        do {
-            sq += dir;
-            ++empty_length;
-        } while (board.get_square(sq) == Piece::NONE);
-
-        if (board.get_square(sq) == Piece::DWARF) {
-            controls[control_lengths[sq][7 - i]] -= 1;
-            control_lengths[sq][7 - i] = 0;
-        }
-
-        if (board.get_square(sq) == Piece::DWARF) {
-            int length = line_lengths[sq][i] + 1; // length behind us, plus our own dwarf
-            int space = std::min(length, empty_length - 1);
-            control_lengths[sq][7 - i] = space;
-            controls[space] += 1;
-        }
+        lengthen_outside_dwarf(board, reverse_line_length, reverse_dir, 7 - i, square);
+        space = shorten_blocked_dwarf(board, square, dir, i);
+        range = std::min(reverse_line_length, space);
+        control_lengths[square][i] = range;
+        controls[range] += 1;
     }
-
-    /*
-     * Here we add the controls of the dwarf that just got added.
-     */
-    for (int dir = 0; dir < directions.size(); dir++) {
-        int length = line_lengths[square][dir] + 1; // length behind us, plus our own dwarf
-        int space = 0;
-        Square temp = square;
-        while (space < length) {
-            temp += directions[7 - dir];
-            if (board.get_square(temp) == Piece::NONE) {
-                space++;
-            } else {
-                break;
-            }
-        }
-
-        if (length > space && board.get_square(square - (space + 1) * directions[dir]) == Piece::TROLL) {
-            ++space; // We can capture a troll
-        }
-        control_lengths[square][7 - dir] = space;
-        controls[space] += 1;
-    }
-
 
     if constexpr (assertion_level >= 3) {
         bool passed = verify_control_lengths();
@@ -442,11 +409,11 @@ AttackBoard& AttackBoard::init_controls(const Board& board) {
 
         auto full = get_line_lengths(sq);
         for (int dir = 0; dir < directions.size(); dir++) {
-            int length = full[dir] + 1; // length behind us, plus our own dwarf
+            int length = full[7 - dir] + 1; // length behind us, plus our own dwarf
             int space = 0;
             Square temp = sq;
             while (space < length) {
-                temp += directions[7 - dir];
+                temp += directions[dir];
                 if (board.get_square(temp) == Piece::NONE) {
                     space++;
                 } else {
@@ -454,7 +421,7 @@ AttackBoard& AttackBoard::init_controls(const Board& board) {
                 }
             }
 
-            if (length > space && board.get_square(sq - (space + 1) * directions[dir]) == Piece::TROLL) {
+            if (length > space && board.get_square(sq + (space + 1) * directions[dir]) == Piece::TROLL) {
                 ++space; // We can capture a troll
             }
             control_lengths[sq][dir] = space;
