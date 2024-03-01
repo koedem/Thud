@@ -13,6 +13,6 @@ public:
 
     void generate_captures(std::vector<Move>& captures, Board& board) const;
 
-    explicit MoveGenerator(uint32_t seed = std::random_device()()) : seed(seed) {
+    explicit MoveGenerator(uint32_t seed = seeder()) : seed(seed) {
     }
 };
