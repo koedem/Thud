@@ -4,6 +4,7 @@
 #include "Indexer.h"
 #include "Evaluation.h"
 #include "AttackBoard.h"
+#include "BigAttackBoard.h"
 
 class Board {
 
@@ -16,6 +17,7 @@ class Board {
     Indexer indexer;
     Evaluation evaluation;
     AttackBoard attack_board;
+    BigAttackBoard old_ab;
 
 public:
     explicit Board(Position position);
@@ -47,8 +49,6 @@ public:
     [[nodiscard]] int get_troll_centers() const;
 
     const std::array<uint8_t , 8>& line_lengths(Square square) const;
-
-    const std::array<uint8_t, 8>& empty_lengths(Square square) const;
 
     const std::array<int, 16>& get_controls() const;
 

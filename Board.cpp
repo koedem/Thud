@@ -47,6 +47,13 @@ Board::Board(Position type) : board(255, Piece::NONE), to_move(Dwarf) {
     }
     attack_board.init_lines(*this);
     attack_board.init_empties(*this);
+    attack_board.init_controls(*this);
+
+    if (assertion_level >= 2) {
+        old_ab.init_lines(*this);
+        old_ab.init_empties(*this);
+        old_ab.init_controls(*this);
+    }
 }
 
 void Board::change_to_move() {
@@ -180,6 +187,20 @@ void Board::remove_dwarf(Square square) {
     }
     dwarfs_remaining--;
     attack_board.remove_dwarf(*this, square);
+    if (assertion_level >= 2) {
+        old_ab.remove_dwarf(*this, square);
+        auto old = old_ab.get_controls();
+        auto new_ = attack_board.get_controls();
+        for (int i = 2; i < old.size(); i++) {
+            if (old[i] != new_[i]) {
+                std::cout << "Old and new attack boards don't match in remove dwarf ";
+                print_square(square);
+                std::cout << std::endl;
+                print();
+                abort();
+            }
+        }
+    }
 }
 
 void Board::add_dwarf(Square square) {
@@ -196,6 +217,20 @@ void Board::add_dwarf(Square square) {
     }
     dwarfs_remaining++;
     attack_board.add_dwarf(*this, square);
+    if (assertion_level >= 2) {
+        old_ab.add_dwarf(*this, square);
+        auto old = old_ab.get_controls();
+        auto new_ = attack_board.get_controls();
+        for (int i = 2; i < old.size(); i++) {
+            if (old[i] != new_[i]) {
+                std::cout << "Old and new attack boards don't match in add dwarf ";
+                print_square(square);
+                std::cout << std::endl;
+                print();
+                abort();
+            }
+        }
+    }
 }
 
 void Board::remove_troll(Square square) {
@@ -206,6 +241,21 @@ void Board::remove_troll(Square square) {
 
     trolls_remaining--;
     attack_board.remove_troll(*this, square);
+
+    if (assertion_level >= 2) {
+        old_ab.remove_troll(*this, square);
+        auto old = old_ab.get_controls();
+        auto new_ = attack_board.get_controls();
+        for (int i = 2; i < old.size(); i++) {
+            if (old[i] != new_[i]) {
+                std::cout << "Old and new attack boards don't match in remove troll ";
+                print_square(square);
+                std::cout << std::endl;
+                print();
+                abort();
+            }
+        }
+    }
 }
 
 void Board::add_troll(Square square) {
@@ -216,14 +266,25 @@ void Board::add_troll(Square square) {
 
     trolls_remaining++;
     attack_board.add_troll(*this, square);
+
+    if (assertion_level >= 2) {
+        old_ab.add_troll(*this, square);
+        auto old = old_ab.get_controls();
+        auto new_ = attack_board.get_controls();
+        for (int i = 2; i < old.size(); i++) {
+            if (old[i] != new_[i]) {
+                std::cout << "Old and new attack boards don't match in add troll ";
+                print_square(square);
+                std::cout << std::endl;
+                print();
+                abort();
+            }
+        }
+    }
 }
 
 EvalType Board::get_eval(const EvalParameters& params) const {
     return evaluation.eval(*this, params);
-}
-
-const std::array<uint8_t, 8> &Board::empty_lengths(Square square) const {
-    return attack_board.get_empty_spaces(square);
 }
 
 const std::array<uint8_t, 8>& Board::line_lengths(Square square) const {
