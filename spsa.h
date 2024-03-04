@@ -1,6 +1,4 @@
 
-std::vector<int> results;
-
 struct RealEval {
     double dwarf, control3, control4, connection;
 };
@@ -8,16 +6,24 @@ struct RealEval {
 std::uniform_real_distribution<double> dist_spsa(-1, 1);
 std::mt19937_64 merssenne(default_seed);
 
+double binary_signum(double val) {
+    if (val < 0) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
 /**
  * @param iteration
- * @return a vector of random values in the range [-1,1]
+ * @return a vector of random values in {-1,1}
  */
 RealEval delta() {
     RealEval del{};
-    del.dwarf = dist_spsa(merssenne);
-    del.control3 = dist_spsa(merssenne);
-    del.control4 = dist_spsa(merssenne);
-    del.connection = dist_spsa(merssenne);
+    del.dwarf = binary_signum(dist_spsa(merssenne));
+    del.control3 = binary_signum(dist_spsa(merssenne));
+    del.control4 = binary_signum(dist_spsa(merssenne));
+    del.connection = binary_signum(dist_spsa(merssenne));
     return del;
 }
 
@@ -85,7 +91,7 @@ double spsa_gamma = 0.101;
  */
 double a = 1, c = 10;
 
-int iteration_count = 3000;
+int iteration_count = 5000;
 int A = iteration_count / 10;
 
 double ak(int iterations) {
@@ -95,38 +101,32 @@ double ak(int iterations) {
 double ck(int iterations) {
     return c / pow(iterations + 1, spsa_gamma);
 }
+int iteration = 0;
 
 void simple_spsa() {
-    for (int iteration = 0; iteration < iteration_count; ++iteration) {
-        RealEval delta_dwarf = times(delta(), ck(iteration));
-        //RealEval delta_troll = delta(iteration);
-
+    while (iteration < iteration_count) {
         io_mutex.lock();
-        if (iteration > 0 && iteration % 50 == 0) {
-            for (int i = 2 * (iteration - 50); i < 2 * iteration; i++) {
-                std::cout << results[i] << std::endl;
-            }
-        }
-
+        int local_iteration = iteration++;
+        RealEval delta_dwarf = times(delta(), ck(local_iteration));
+        //RealEval delta_troll = delta(local_iteration);
         EvalParameters plus_dwarf = from_real(plus(current_dwarf, delta_dwarf));
         //EvalParameters plus_troll = from_real(plus(current_troll, delta_troll));
         EvalParameters minus_dwarf = from_real(minus(current_dwarf, delta_dwarf));
         //EvalParameters minus_troll = from_real(minus(current_troll, delta_troll));
-
         io_mutex.unlock();
+
         auto result_plus = quiet_selfplay(depth, depth, plus_dwarf, default_troll_eval);
         auto result_minus = quiet_selfplay(depth, depth, minus_dwarf, default_troll_eval);
         auto result = result_plus - result_minus;
         //auto result = quiet_selfplay(2, 2, plus_dwarf, minus_troll) - quiet_selfplay(2, 2, minus_dwarf, plus_troll);
+
         io_mutex.lock();
-        results.emplace_back(result_plus);
-        results.emplace_back(result_minus);
-        current_dwarf = plus(current_dwarf, times(delta_dwarf, result * ak(iteration)));
+        current_dwarf = plus(current_dwarf, times(invert(delta_dwarf), result * ak(local_iteration)));
         //current_troll = plus(current_troll, delta_troll, winner * apply_factor);
 
-        std::cout << "Iteration " << iteration << " Result: " << result_plus << " ";
+        std::cout << "Iteration " << local_iteration << " Result: " << result_plus << " ";
         print(current_dwarf);
-        std::cout << "Iteration " << iteration << " Results: " <<  result_minus << " ";
+        std::cout << "Iteration " << local_iteration << " Results: " <<  result_minus << " ";
         print(current_dwarf);
         //print(current_troll);
         io_mutex.unlock();
